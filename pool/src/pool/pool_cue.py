@@ -1,6 +1,3 @@
-from physics.coordinates import Coordinates
-
-
 class PoolCue:
     def __init__(self, angle: float):
         """

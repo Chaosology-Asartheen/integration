@@ -5,6 +5,7 @@ import pygame
 import pygame.gfxdraw
 
 from physics.collisions import *
+from physics.coordinates import Coordinates
 from physics.utility import get_angle
 from pool.ball_type import BallType
 from pool.pool_ball import PoolBall

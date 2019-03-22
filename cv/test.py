@@ -55,7 +55,7 @@ class BallInfo:
         self.bgr = (rgb[2], rgb[1], rgb[0])
         self.str_rep = str_rep
 
-class Ball:
+class CVBall:
     def __init__(self, x, y, color):
         self.x = x
         self.y = y
@@ -127,7 +127,7 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
                 table_x = norm_x * TABLE_LENGTH
                 table_y = norm_y * TABLE_WIDTH
                 print("%s (%.3f,%.3f)" % (ball.str_rep, table_x, table_y))
-                cv_balls.append(Ball(norm_x, norm_y, ball.str_rep))
+                cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep))
                 if DISPLAY:
                     # draw the circle and centroid on the frame,
                     # then update the list of tracked points

@@ -12,6 +12,11 @@ from pool.ball_type import BallType
 from pool.game_type import GameType
 from pool.pool_ball import PoolBall
 
+import sys
+sys.path.append('/Users/skim/ws/500')
+print(sys.path)
+from cv.test import CVBall
+
 LONG_DIAMONDS = 8
 SHORT_DIAMONDS = 4
 CUE_START_DIAMOND = 2
@@ -22,7 +27,7 @@ BALL_RADIUS = 10
 
 
 class PoolTable:
-    def __init__(self, nw, se):
+    def __init__(self, nw, se, cv_ball_locations=None, cv_cue_points=None):
         # Table dimensions
         self.nw = nw
         self.se = se
@@ -36,13 +41,19 @@ class PoolTable:
         self.width = self.top - self.bottom
 
         # Pool table balls
-        self.balls = PoolTable.get_balls(GameType.NINE_BALL)
-        self.rack_balls(GameType.NINE_BALL)
-        assert (BallType.CUE in self.balls)
-        self.cue_ball = self.balls[BallType.CUE]
+        if cv_ball_locations is None:
+            self.balls = PoolTable.get_balls(GameType.NINE_BALL)
+            self.rack_balls(GameType.NINE_BALL)
+            assert (BallType.CUE in self.balls)
+            self.cue_ball = self.balls[BallType.CUE]
+        else:
+            self.place_cv_balls(cv_cue_points)
 
         # Cue stick
-        self.cue_angle = 0
+        if cv_cue_points is None:
+            self.cue_angle = 0
+        else:
+            self.set_cv_cue_stick(cv_cue_points)
 
         # Deflection lines
         self.object_deflect_line_start = None
@@ -63,6 +74,89 @@ class PoolTable:
 
         self.corner_pocket_angle = 5
         self.side_pocket_angle = 5
+
+    @staticmethod
+    def convert_cv_coords(self, cv_x, cv_y) -> Coordinates:
+        """
+        Convert coordinates (cv_ball coordinates go from [0, 1.0])
+
+        :param cv_coords: tuple of cv coordinates as floats
+        :return: proper Coordinates for the pool table
+        """
+
+        new_x = self.left + self.length * cv_x
+        new_y = self.bottom + self.width * cv_y
+        return Coordinates(new_x, new_y)
+
+    @staticmethod
+    def convert_cv_color(self, color):
+        if color is 'white':
+            return BallType.CUE
+        elif color is 'yellow':
+            return BallType.ONE
+        elif color is 'blue':
+            return BallType.TWO
+        elif color is 'red':
+            return BallType.THREE
+        elif color is 'purple':
+            return BallType.FOUR
+        elif color is 'orange':
+            return BallType.FIVE
+        elif color is 'green':
+            return BallType.SIX
+        elif color is 'brown':
+            return BallType.SEVEN
+        elif color is 'black':
+            return BallType.EIGHT
+        # TODO: nine-ball
+        else:
+            raise Exception('unknown cv ball color -- find Tina and throw saas at her')
+
+    def place_cv_balls(self, cv_balls: List[CVBall]):
+        """
+        Place pool balls from locations given by CV module.
+
+        self.balls and self.cue_ball will be set
+        """
+
+        """
+        class CVBall:
+            def __init__(self, x, y, color):
+                self.x = x
+                self.y = y
+                self.color = color
+        """
+
+        # Initialize empty ball list
+        self.balls = []
+
+        # TODO: Get mass, radius from a config file
+        mass = 5
+        radius = 5
+
+        # Convert each CVBall to a PoolBall
+        for cv_ball in cv_balls:
+            pos = self.convert_cv_coords(cv_ball.x, cv_ball.y)
+            ball_type = self.convert_cv_color(cv_ball.color)
+
+            ball = PoolBall(ball_type, pos, mass, radius)
+
+            self.balls.append(ball)
+
+
+    def set_cv_cue_stick(self, points):
+        """
+        Use 2 points to get the cue stick angle.
+
+        :return:
+        """
+
+        # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
+        front_point = Coordinates(points[0][0], points[0][1])
+        back_point = Coordinates(points[1][0], points[1][1])
+
+        # ¯\_(ツ)_/¯
+        self.cue_angle = get_angle(back_point, front_point)
 
     def reset_cue_ball(self):
         self.cue_angle = 0.0

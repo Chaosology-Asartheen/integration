@@ -14,6 +14,7 @@ from pool.pool_ball import PoolBall
 
 import sys
 sys.path.append('/Users/skim/ws/500')
+sys.path.append('/Users/skim/ws/500/cv')
 print(sys.path)
 from cv.test import CVBall
 

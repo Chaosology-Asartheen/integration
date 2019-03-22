@@ -10,6 +10,8 @@ from physics.utility import get_angle
 from pool.ball_type import BallType
 from pool.pool_ball import PoolBall
 from pool.pool_table import PoolTable
+from cv.test import init_ballinfo, find_balls, find_cuestick, getResizedFrame
+from cv.houghlines import computeLines
 
 SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1000, 1000
 TABLE_LENGTH = 800
@@ -167,6 +169,98 @@ def draw_pool_ball(ball: PoolBall):
     pygame.gfxdraw.aacircle(SCREEN, x, y, r, color)
     pygame.gfxdraw.filled_circle(SCREEN, x, y, r, color)
 
+def gui_update(table):
+    # Get just the list of balls to iterate easily
+    balls = list(table.balls.values())
+
+    clear_screen()
+
+    # Check Pygame events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+        elif event.type == pygame.MOUSEBUTTONUP:
+            # These positions assume origin lower-left
+            target_pos = coords_from_pygame(pygame.mouse.get_pos(), HEIGHT)
+            cue_pos = table.cue_ball.pos
+
+            table.cue_angle = get_angle(target_pos, cue_pos)
+            print('AFTER SETTING cue_angle', table.cue_angle)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                sys.exit()
+            elif event.key == pygame.K_b:
+                # BREAK cue ball
+                mag = 500.0
+                force = Vector(mag * np.cos(np.radians(table.cue_angle)),
+                               mag * np.sin(np.radians(table.cue_angle)))
+                table.balls[BallType.CUE].apply_force(force)
+            elif event.key == pygame.K_SPACE:
+                # Strike cue ball
+                mag = 50.0
+                force = Vector(mag * np.cos(np.radians(table.cue_angle)),
+                               mag * np.sin(np.radians(table.cue_angle)))
+                table.balls[BallType.CUE].apply_force(force)
+            elif event.key == pygame.K_p:
+                # DEBUG set all speeds to 0
+                for ball in balls:
+                    ball.vel.x, ball.vel.y = 0, 0
+            elif event.key == pygame.K_r:
+                # DEBUG reset
+                # Create pool table
+                nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
+                se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+                table = PoolTable(nw, se)
+
+    # Table time step
+    table.time_step()
+
+    # Draw pool table
+    draw_pool_table(table)
+
+    draw_cue_stick_line(table)
+    draw_cue_ghost_ball(table)
+    draw_cue_ball_deflection_line(table)
+    draw_object_ball_deflection_line(table)
+
+    # Draw all pool balls
+    for ball in balls:
+        draw_pool_ball(ball)
+
+    pygame.display.flip()
+
+def main():
+    USING_CAMERA = False
+    DISPLAY = True
+
+    # Initialize CV info
+    balls = init_ballinfo()
+    if USING_CAMERA:
+        cap = cv2.VideoCapture(1)
+    running = True
+    while running:
+        frame = getResizedFrame()
+        # CV
+        hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        cv_balls = find_balls(balls, hsv_img, frame)
+        cuestick_info = find_cuestick(hsv_img, frame)
+
+        # Pass parameters to pool
+
+        if DISPLAY:
+            cv2.imshow('frame', frame)
+
+        while(1):
+            k = cv2.waitKey(5) & 0xFF
+            if k == ESC_KEY:
+                running = False
+                break
+
+    # When everything done, release the capture
+    if USING_CAMERA:
+        cap.release()
+    cv2.destroyAllWindows()
+
 
 def main():
     init()
@@ -175,6 +269,9 @@ def main():
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
     table = PoolTable(nw, se)
+
+
+
 
     while 1:
         # Get just the list of balls to iterate easily

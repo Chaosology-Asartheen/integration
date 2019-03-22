@@ -135,7 +135,9 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
                     # Seems like using x,y from contour area is better
                     cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
 
-def find_balls(balls, hsv_img, frame, table_coords):
+def find_balls(balls, hsv_img, frame):
+    SHOW_HOUGH = False
+    table_coords = computeLines(frame, SHOW_HOUGH)
     cv_balls = []
     for ball in balls:
         find_ball(ball, hsv_img, frame, table_coords, cv_balls)
@@ -171,6 +173,27 @@ def find_cuestick(hsv, frame):
 
             return [(int(x),int(y)), (cols-1, righty)]
 
+def getResizedFrame():
+    if USING_CAMERA:
+        cap = cv2.VideoCapture(1)
+    running = True
+    while running:
+        frame = None
+
+
+        # Take each frame
+        if USING_CAMERA:
+            ret, frame = cap.read()
+        else:
+            # filename = "pool.jpg"
+            filename = "/Users/skim/ws/500/cv/pool.jpg"
+            frame = cv2.imread(filename)
+        frame_height = frame.shape[0]
+        frame_width = frame.shape[1]
+        resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
+        frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
+    return frame
+
 def main():
     balls = init_ballinfo()
 
@@ -181,24 +204,28 @@ def main():
     running = True
     while running:
         frame = None
+
+
         # Take each frame
         if USING_CAMERA:
             ret, frame = cap.read()
         else:
-            filename = "pool.jpg"
+            # filename = "pool.jpg"
+            filename = "/Users/skim/ws/500/cv/pool.jpg"
             frame = cv2.imread(filename)
         frame_height = frame.shape[0]
         frame_width = frame.shape[1]
         resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
         frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
-
         table_coords = computeLines(frame, False)
         # Convert BGR to HSV
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        cv_balls = find_balls(balls, hsv_img, frame, table_coords)
+        cv_balls = find_balls(balls, hsv_img, frame)
 
         print(cv_balls)
         print(find_cuestick(hsv_img, frame))
+
+        # Pass parameters to pool
 
         if DISPLAY:
             cv2.imshow('frame', frame)

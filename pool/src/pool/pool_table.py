@@ -76,7 +76,6 @@ class PoolTable:
         self.corner_pocket_angle = 5
         self.side_pocket_angle = 5
 
-    @staticmethod
     def convert_cv_coords(self, cv_x, cv_y) -> Coordinates:
         """
         Convert coordinates (cv_ball coordinates go from [0, 1.0])
@@ -86,10 +85,9 @@ class PoolTable:
         """
 
         new_x = self.left + self.length * cv_x
-        new_y = self.bottom + self.width * cv_y
+        new_y = self.bottom + self.width * (1.0 - cv_y)
         return Coordinates(new_x, new_y)
 
-    @staticmethod
     def convert_cv_color(self, color):
         if color is 'white':
             return BallType.CUE
@@ -129,7 +127,7 @@ class PoolTable:
         """
 
         # Initialize empty ball list
-        self.balls = []
+        self.balls = {}
 
         # TODO: Get mass, radius from a config file
         mass = 5
@@ -142,7 +140,10 @@ class PoolTable:
 
             ball = PoolBall(ball_type, pos, mass, radius)
 
-            self.balls.append(ball)
+            self.balls[ball_type] = ball
+
+            if ball_type is BallType.CUE:
+                self.cue_ball = ball
 
 
     def set_cv_cue_stick(self, points):
@@ -153,8 +154,8 @@ class PoolTable:
         """
 
         # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
-        front_point = Coordinates(points[0][0], points[0][1])
-        back_point = Coordinates(points[1][0], points[1][1])
+        front_point = Coordinates(points[1][0], 1.0-points[1][1])
+        back_point = Coordinates(points[0][0], 1.0-points[0][1])
 
         # ¯\_(ツ)_/¯
         self.cue_angle = get_angle(back_point, front_point)

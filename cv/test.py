@@ -175,23 +175,16 @@ def find_cuestick(hsv, frame):
 
 def getResizedFrame():
     if USING_CAMERA:
-        cap = cv2.VideoCapture(1)
-    running = True
-    while running:
-        frame = None
+        ret, frame = cap.read()
+    else:
+        # filename = "pool.jpg"
+        filename = "/Users/skim/ws/500/cv/pool.jpg"
+        frame = cv2.imread(filename)
+    frame_height = frame.shape[0]
+    frame_width = frame.shape[1]
+    resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
+    frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
 
-
-        # Take each frame
-        if USING_CAMERA:
-            ret, frame = cap.read()
-        else:
-            # filename = "pool.jpg"
-            filename = "/Users/skim/ws/500/cv/pool.jpg"
-            frame = cv2.imread(filename)
-        frame_height = frame.shape[0]
-        frame_width = frame.shape[1]
-        resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
-        frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
     return frame
 
 def main():
@@ -241,4 +234,4 @@ def main():
         cap.release()
     cv2.destroyAllWindows()
 
-main()
+# main()

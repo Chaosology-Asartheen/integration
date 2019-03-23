@@ -1,5 +1,6 @@
 import sys
 
+import cv2
 import numpy as np
 import pygame
 import pygame.gfxdraw
@@ -170,6 +171,8 @@ def draw_pool_ball(ball: PoolBall):
     pygame.gfxdraw.filled_circle(SCREEN, x, y, r, color)
 
 def gui_update(table):
+    print('gui update')
+
     # Get just the list of balls to iterate easily
     balls = list(table.balls.values())
 
@@ -230,8 +233,16 @@ def gui_update(table):
     pygame.display.flip()
 
 def main():
+    init()
+
+    print('in main...........')
     USING_CAMERA = False
-    DISPLAY = True
+    DISPLAY = False
+
+    # Initialize pool table here
+    nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
+    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+    table = PoolTable(nw, se)
 
     # Initialize CV info
     balls = init_ballinfo()
@@ -239,22 +250,32 @@ def main():
         cap = cv2.VideoCapture(1)
     running = True
     while running:
+        print('running')
+
         frame = getResizedFrame()
+        print('A')
         # CV
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         cv_balls = find_balls(balls, hsv_img, frame)
         cuestick_info = find_cuestick(hsv_img, frame)
+        print('B')
 
         # Pass parameters to pool
+        table.place_cv_balls(cv_balls)
+        table.set_cv_cue_stick(cuestick_info)
+        print('C')
 
         if DISPLAY:
             cv2.imshow('frame', frame)
 
-        while(1):
-            k = cv2.waitKey(5) & 0xFF
-            if k == ESC_KEY:
-                running = False
-                break
+            while(1):
+                k = cv2.waitKey(5) & 0xFF
+                if k == ESC_KEY:
+                    running = False
+                    break
+
+        # Here, update GUI
+        gui_update(table)
 
     # When everything done, release the capture
     if USING_CAMERA:
@@ -262,15 +283,13 @@ def main():
     cv2.destroyAllWindows()
 
 
-def main():
+def main2():
     init()
 
     # Create pool table
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
     table = PoolTable(nw, se)
-
-
 
 
     while 1:

@@ -33,7 +33,6 @@ def computeLines(img, displayHoughLines):
           minX = min(minX, min(x1, x2))
         if y1 > 900 or y2 > 900:
           maxX = max(maxX, max(x1, x2))
-        print("(" + str(x1) + ", " + str(y1) + ")  " + "(" + str(x2) + ", " + str(y2) + ")")
         if displayHoughLines:
           cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
 
@@ -44,7 +43,7 @@ def computeLines(img, displayHoughLines):
         k = cv2.waitKey(5) & 0xFF
         if k == 27:
           break
-  print("Mins: (" + str(minX) + "," + str(minY) + ") Maxs: (" + str(maxX) + "," + str(maxY) + ")")
+  print("NW: (" + str(minX) + "," + str(minY) + ") SE: (" + str(maxX) + "," + str(maxY) + ")")
   return minX, minY, maxX, maxY
 
 # def run():

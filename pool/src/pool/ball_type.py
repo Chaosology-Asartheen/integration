@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pool import colors
+from pool.src.pool import colors
 
 
 class BallType(Enum):

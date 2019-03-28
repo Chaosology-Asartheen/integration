@@ -1,6 +1,13 @@
-import physics.utility as util
-from physics.coordinates import Coordinates
-from physics.direction import Direction
+import sys
+
+import numpy as np
+
+sys.path.append('/Users/skim/ws/500')
+sys.path.append('/Users/skim/ws/500/cv')
+sys.path.append('/Users/skim/ws/500/pool')
+
+from pool.src.physics.coordinates import Coordinates
+from pool.src.physics.direction import Direction
 
 
 class Vector:
@@ -41,14 +48,40 @@ class Vector:
         Get the magnitude for this vector.
         """
 
-        return util.get_distance(Coordinates(self.x, self.y))
+        return np.sqrt(self.x**2 + self.y**2)
+        # return get_distance(Coordinates(self.x, self.y))
 
     def get_angle(self):
         """
         Get the angle for this vector.
         """
 
-        return util.get_angle(Coordinates(self.x, self.y))
+        x, y = self.x, self.y
+
+        if x == y == 0:
+            return None  # FIXME: Best return value for 'no angle'?
+        elif x == 0:
+            if y > 0:
+                return 90.0
+            elif y < 0:
+                return 270.0
+        elif y == 0:
+            if x > 0:
+                return 0.0
+            else:
+                return 180.0
+
+        # Compute raw angle (between -90 and 90)
+        raw_angle = np.degrees(np.arctan(y / x))
+
+        if x > 0 and y > 0:  # Quadrant 1
+            return raw_angle
+        elif x < 0 and y > 0:  # Quadrant 2
+            return 180.0 + raw_angle
+        elif x < 0 and y < 0:  # Quadrant 3
+            return 180.0 + raw_angle
+        else:  # Quadrant 4
+            return (360.0 + raw_angle) % 360.0
 
     def dot_product(self, other):
         """

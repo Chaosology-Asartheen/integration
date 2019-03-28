@@ -1,10 +1,10 @@
 from typing import Optional
 
-from physics.coordinates import Coordinates
-from physics.direction import Direction
-from physics.utility import get_distance
-from physics.vector import Vector
-from pool.pool_ball import PoolBall
+from pool.src.physics.coordinates import Coordinates
+from pool.src.physics.direction import Direction
+from pool.src.physics.utility import get_distance
+from pool.src.physics.vector import Vector
+from pool.src.pool.pool_ball import PoolBall
 
 
 def check_ball_ball_collision(a: PoolBall, b: PoolBall) -> bool:

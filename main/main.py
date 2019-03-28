@@ -11,9 +11,9 @@ from pool.src.pool.pool_table import PoolTable
 
 
 def main():
+    # Initialize GUI
     screen = gui_init()
 
-    print('in main...........')
     USING_CAMERA = False
     DISPLAY = False
 
@@ -28,10 +28,8 @@ def main():
         cap = cv2.VideoCapture(1)
     running = True
     while running:
-        print('running')
-
         frame = getResizedFrame()
-        print('A')
+
         # CV
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         cv_balls = find_balls(balls, hsv_img, frame)
@@ -41,7 +39,6 @@ def main():
         # Pass parameters to pool
         table.place_cv_balls(cv_balls)
         table.set_cv_cue_stick(cuestick_info)
-        print('C')
 
         if DISPLAY:
             cv2.imshow('frame', frame)

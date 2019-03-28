@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import imutils
 from datetime import datetime
-from houghlines import computeLines
+from houghlines import compute_lines
 
 # HSV values for different color balls
 # Range is 180,255,255
@@ -88,9 +88,9 @@ def init_ballinfo():
     return balls
 
 def find_ball(ball, hsv, frame, table_coords, cv_balls):
-    min_x,min_y,maxX,maxY = table_coords
-    table_pixel_length = maxX - min_x
-    table_pixel_width = maxY - min_y
+    min_x,min_y,max_x,max_y = table_coords
+    table_pixel_length = max_x - min_x
+    table_pixel_width = max_y - min_y
 
     # Threshold the HSV image to get only ball colors
     mask = cv2.inRange(hsv, ball.lower_hsv, ball.upper_hsv)
@@ -117,14 +117,13 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
         # it to compute the minimum enclosing circle and
         # centroid
 
-        # circles = [c for c in cnts if cv2.contourArea(c) >= 200]
         for c in circles:
             ((x, y), radius) = cv2.minEnclosingCircle(c)
             # only proceed if the radius meets a minimum size
             if (radius > MIN_RADIUS * table_pixel_width and 
                 radius < MAX_RADIUS * table_pixel_width):
-                norm_x = (x - min_x) / (maxX - min_x)
-                norm_y = (y - min_y) / (maxY - min_y)
+                norm_x = (x - min_x) / (max_x - min_x)
+                norm_y = (y - min_y) / (max_y - min_y)
                 table_x = norm_x * TABLE_LENGTH
                 table_y = norm_y * TABLE_WIDTH
                 
@@ -140,15 +139,17 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
                         cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
 
 def find_balls(balls, hsv_img, frame):
-    SHOW_HOUGH = False
-    table_coords = computeLines(frame, SHOW_HOUGH)
     cv_balls = []
+    SHOW_HOUGH = True
+    table_coords = compute_lines(frame, SHOW_HOUGH)
+    # table_coords = [0,0,800,400]
+    if not table_coords:
+        return None
     for ball in balls:
         find_ball(ball, hsv_img, frame, table_coords, cv_balls)
     return cv_balls
 
 def find_cuestick(hsv, frame):
-
     mask = cv2.inRange(hsv, cue_lower, cue_upper)
     # Bitwise-AND mask and original image
     res = cv2.bitwise_and(frame,frame, mask=mask)
@@ -163,19 +164,17 @@ def find_cuestick(hsv, frame):
         cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
-        contourArea = cv2.contourArea(cnt)
-        if (MAX_CONTOUR_AREA < contourArea):
+        if (MAX_CONTOUR_AREA < cv2.contourArea(cnt)):
             rows,cols = hsv.shape[:2]
-            print("rows: " + str(rows) + "cols: " + str(cols))
             [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
-            lefty = int((-x*vy/vx) + y)
-            righty = int(((cols-x)*vy/vx)+y)
+            left_y = int((-x*vy/vx) + y)
+            right_y = int(((cols-x)*vy/vx)+y)
 
             mid_point = (int(x), int(y))
-            left_point = (int(0),int(lefty))
-            right_point = (int(cols-1),int(righty))
+            left_point = (int(0),int(left_y))
+            right_point = (int(cols-1),int(right_y))
             if DISPLAY:
-                cv2.line(frame,(cols-1,righty),(0,lefty),white,2)
+                cv2.line(frame,(cols-1,right_y),(0,left_y),white,2)
                 cv2.circle(frame, mid_point, 2, red, 2)
                 cv2.circle(frame, left_point, 2, red, 2)
                 cv2.circle(frame, right_point, 2, red, 2)
@@ -199,20 +198,25 @@ def getResizedFrame():
 def main():
     balls = init_ballinfo()
 
-    # table_coords = 28,49,758,400 # TODO: from houghlines.py
-
     if USING_CAMERA:
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
     running = True
     while running:
         frame = None
 
-
         # Take each frame
         if USING_CAMERA:
             ret, frame = cap.read()
+            cv2.imwrite("1.jpg", frame)
+            if DISPLAY:
+                cv2.imshow('frame', frame)
+                while(1):
+                    k = cv2.waitKey(5) & 0xFF
+                    if k == ESC_KEY:
+                        running = False
+                        break
         else:
-            filename = "pool.jpg"
+            filename = "1.jpg"
             # filename = "/Users/skim/ws/500/cv/pool.jpg"
             frame = cv2.imread(filename)
         frame_height = frame.shape[0]
@@ -230,12 +234,11 @@ def main():
 
         if DISPLAY:
             cv2.imshow('frame', frame)
-
-        while(1):
-            k = cv2.waitKey(5) & 0xFF
-            if k == ESC_KEY:
-                running = False
-                break
+            while(1):
+                k = cv2.waitKey(5) & 0xFF
+                if k == ESC_KEY:
+                    running = False
+                    break
 
     # When everything done, release the capture
     if USING_CAMERA:

@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+# CONSTANTS
+BORDER_WIDTH = 1.25
+
 """compute_lines computes lines of the pool table edges.
 
 Args:
@@ -69,7 +72,7 @@ def compute_lines(img, display_hough_lines):
     cv2.imshow('edges',edges)
     cv2.imshow('houghlines.jpg',line_image)
   print("NW: (" + str(min_x) + "," + str(min_y) + ") SE: (" + str(max_x) + "," + str(max_y) + ")")
-  return min_x, min_y, max_x, max_y
+  return min_x+BORDER_WIDTH, min_y+BORDER_WIDTH, max_x-BORDER_WIDTH, max_y-BORDER_WIDTH
 
 
 def resize_img(img):

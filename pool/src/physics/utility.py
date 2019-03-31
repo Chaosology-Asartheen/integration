@@ -100,68 +100,6 @@ def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coord
 def check_point_on_line_segment(x, y, p1, p2):
     return p1.x <= x <= p2.x and p1.y <= y <= p2.y
 
-
-# TODO: Delete this nephew
-def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
-    # print('-------')
-    # print('get_ray_circle_intersection')
-    # print('p1:{}, p2:{}'.format(p1, p2))
-    # print('c_mid:{}, c_radius:{}'.format(c_mid, c_radius))
-    # print('-------')
-    if (p2.x - p1.x) == 0:
-        print('p2.x = ', p2.x)
-        print('p1.x = ', p1.x)
-        exit(-1)
-    # Line equation: y = mx + b
-    m = (p2.y - p1.y) / (p2.x - p1.x)
-    b = p1.y - m * p1.x
-
-    # Circle equation: (x-p)^2 + (y-q)^2 = r^2
-    p, q, r = c_mid.x, c_mid.y, c_radius
-
-    # First, substituting line equation into circle equation
-    # These are the coefficients of the quadratic equation created
-    A = (m ** 2 + 1)
-    B = 2 * (m * b - m * q - p)
-    C = (q ** 2 - r ** 2 + p ** 2 - 2 * b * q + b ** 2)
-
-    discrim = B ** 2 - 4 * A * C
-
-    if discrim < 0:
-        print('line misses circle')
-        # Line misses circle
-        return None
-    elif discrim == 0:
-        print('line is tangent to circle')
-        # Line tangent to circle
-        x1 = (-B + np.sqrt(discrim)) / 2 * A
-        y1 = m * x1 + b
-        x2 = (-B - np.sqrt(discrim)) / 2 * A
-        y2 = m * x2 + b
-
-        assert (x1 == x2 and y1 == y2)
-        return Coordinates(x1, y1)
-
-    else:  # discrim > 0
-        print('line intersects circle')
-        # Line meets circle at 2 points
-        x1 = (-B + np.sqrt(discrim)) / 2 * A
-        result1 = Coordinates(x1, m * x1 + b)
-        x2 = (-B - np.sqrt(discrim)) / 2 * A
-        result2 = Coordinates(x2, m * x2 + b)
-
-        mag1 = get_distance(p1, result1)
-        mag2 = get_distance(p1, result2)
-
-        if not check_point_on_line_segment(result1.x, result1.y, p1, p2):
-            return None
-
-        if mag1 < mag2:
-            return result1
-        else:
-            return result2
-
-
 def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
                                 p3: Coordinates, p4: Coordinates) -> Optional[Coordinates]:
     """

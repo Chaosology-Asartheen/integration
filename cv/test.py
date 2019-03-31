@@ -6,30 +6,30 @@ from houghlines import compute_lines
 
 # HSV values for different color balls
 # Range is 180,255,255
-lower_yellow = np.array([17,200,5]) #1
-upper_yellow = np.array([25,255,255])
+lower_yellow = np.array([20,75,200]) #1
+upper_yellow = np.array([35,180,255])
 yellow = (255,255,0)
-lower_orange = np.array([6,200,5]) #2
-upper_orange = np.array([15,255,255])
+lower_orange = np.array([5,20,200]) #2
+upper_orange = np.array([14,130,255])
 orange = (255,140,0)
-lower_blue = np.array([106,150,5]) #3
-upper_blue = np.array([118,255,255])
+lower_blue = np.array([98,200,125]) #3
+upper_blue = np.array([103,238,210])
 blue = (0,0,255)
-lower_purple = np.array([104,50,0]) #4, hard for darker
-upper_purple = np.array([162,200,128])
+lower_purple = np.array([107,125,100]) #4, hard for darker
+upper_purple = np.array([114,190,140])
 purple = (138,43,226)
-lower_red = np.array([0,100,200]) #5
-upper_red = np.array([4,255,255])
+lower_red = np.array([177,0,250]) #5
+upper_red = np.array([180,255,255])
 red = (255,0,0)
-lower_green = np.array([87,235,76]) #6
-upper_green = np.array([94,255,128])
+lower_green = np.array([89,195,0]) #6
+upper_green = np.array([91,230,255])
 green = (0,128,0)
-lower_brown = np.array([175,50,0]) #7, hard
-upper_brown = np.array([180,255,200])
+lower_brown = np.array([170,100,0]) #7, hard
+upper_brown = np.array([179,180,230])
 brown = (165,42,42)
-lower_white = np.array([18,0,0])
-upper_white = np.array([36,52,255])
-white = (255,255,255)
+lower_white = np.array([0,0,255])
+upper_white = np.array([180,10,255])
+white = (0,0,0)
 black = (0,0,0)
 lower_black = np.array([0,0,0])
 upper_black = np.array([180,255,35])
@@ -44,7 +44,7 @@ ESC_KEY = 27
 DISPLAY = True
 MAX_CONTOUR_AREA = 1000
 USING_CAMERA = False
-MIN_RADIUS = .038
+MIN_RADIUS = .025
 MAX_RADIUS = .0485
 RESIZE_FRAME_WIDTH = 800
 
@@ -93,8 +93,9 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
     table_pixel_width = max_y - min_y
 
     # Threshold the HSV image to get only ball colors
+    print("Looking at " + ball.str_rep)
     mask = cv2.inRange(hsv, ball.lower_hsv, ball.upper_hsv)
-    mask = cv2.erode(mask, None, iterations=1)
+    # mask = cv2.erode(mask, None, iterations=1)
     mask = cv2.dilate(mask, None, iterations=1)
     
     # Bitwise-AND mask and original image
@@ -103,6 +104,12 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
     if DISPLAY:
         cv2.imshow('mask',mask)
         cv2.imshow('res',res)
+        # while(1):
+        #     ESC_KEY = 27
+        #     k = cv2.waitKey(5) & 0xFF
+        #     if k == ESC_KEY:
+        #         running = False
+        #         break
 
     # find contours in the mask and initialize the current
     # (x, y) center of the ball
@@ -118,29 +125,41 @@ def find_ball(ball, hsv, frame, table_coords, cv_balls):
         # centroid
 
         for c in circles:
-            ((x, y), radius) = cv2.minEnclosingCircle(c)
-            # only proceed if the radius meets a minimum size
-            if (radius > MIN_RADIUS * table_pixel_width and 
-                radius < MAX_RADIUS * table_pixel_width):
-                norm_x = (x - min_x) / (max_x - min_x)
-                norm_y = (y - min_y) / (max_y - min_y)
-                table_x = norm_x * TABLE_LENGTH
-                table_y = norm_y * TABLE_WIDTH
-                
-                if (BALL_RADIUS < table_x < TABLE_LENGTH-BALL_RADIUS and
-                    BALL_RADIUS < table_y < TABLE_WIDTH - BALL_RADIUS):
-                    print("%s (%.3f,%.3f)" % (ball.str_rep, table_x, table_y))
-                    cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep))
+            if (100 < cv2.contourArea(c) < 400):
+                print(cv2.contourArea(c))
+
+                ((x, y), radius) = cv2.minEnclosingCircle(c)
+                print(radius)
+                print(MIN_RADIUS * table_pixel_width)
+                print(MAX_RADIUS * table_pixel_width)
+                # only proceed if the radius meets a minimum size
+                if (radius > MIN_RADIUS * table_pixel_width and 
+                    radius < MAX_RADIUS * table_pixel_width):
+                    norm_x = (x - min_x) / (max_x - min_x)
+                    norm_y = (y - min_y) / (max_y - min_y)
+                    table_x = norm_x * TABLE_LENGTH
+                    table_y = norm_y * TABLE_WIDTH
+                    
+                    if (BALL_RADIUS < table_x < TABLE_LENGTH-BALL_RADIUS and
+                        BALL_RADIUS < table_y < TABLE_WIDTH - BALL_RADIUS):
+                        print("%s (%.3f,%.3f)" % (ball.str_rep, table_x, table_y))
+                        cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep))
                     if DISPLAY:
                         # draw the circle and centroid on the frame,
                         # then update the list of tracked points
                         cv2.circle(frame, (int(x), int(y)), int(radius), ball.bgr, 2)
                         # Seems like using x,y from contour area is better
                         cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
+                                # while(1):
+                                #     ESC_KEY = 27
+                                #     k = cv2.waitKey(5) & 0xFF
+                                #     if k == ESC_KEY:
+                                #         running = False
+                                #         break
 
 def find_balls(balls, hsv_img, frame):
     cv_balls = []
-    SHOW_HOUGH = True
+    SHOW_HOUGH = False
     table_coords = compute_lines(frame, SHOW_HOUGH)
     # table_coords = [0,0,800,400]
     if not table_coords:
@@ -207,14 +226,6 @@ def main():
         # Take each frame
         if USING_CAMERA:
             ret, frame = cap.read()
-            cv2.imwrite("1.jpg", frame)
-            if DISPLAY:
-                cv2.imshow('frame', frame)
-                while(1):
-                    k = cv2.waitKey(5) & 0xFF
-                    if k == ESC_KEY:
-                        running = False
-                        break
         else:
             filename = "1.jpg"
             # filename = "/Users/skim/ws/500/cv/pool.jpg"
@@ -223,12 +234,13 @@ def main():
         frame_width = frame.shape[1]
         resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
         frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
+        # cv2.imwrite()
         # Convert BGR to HSV
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         cv_balls = find_balls(balls, hsv_img, frame)
 
         print(cv_balls)
-        print(find_cuestick(hsv_img, frame))
+        # print(find_cuestick(hsv_img, frame))
 
         # Pass parameters to pool
 

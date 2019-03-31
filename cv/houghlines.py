@@ -14,57 +14,60 @@ Returns:
 def compute_lines(img, display_hough_lines):
   # Number of lines we want to detect, ideally 4 for the 4 pool edges,
   # however, some lines are duplicated so this parameter can increase
-  num_lines = 5
+  num_lines = 4
   # Preprocess image
   gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-  lower_threshold = 70
-  upper_threshold = 255
-  ret, threshold_img = cv2.threshold(gray,lower_threshold,upper_threshold,
-    cv2.THRESH_BINARY)
+  kernel_size = 5
+  blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size),0)
 
-  # Perform canny edge detection
-  edges = cv2.Canny(threshold_img,50,150,apertureSize = 3)
+  low_threshold = 150
+  high_threshold = 250
+  edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
 
   # Run OpenCV's houghlines
-  lines = cv2.HoughLines(edges,1,np.pi/180,100)
-  print(lines)
+  rho = 1  # distance resolution in pixels of the Hough grid
+  theta = np.pi / 180  # angular resolution in radians of the Hough grid
+  threshold = 15  # minimum number of votes (intersections in Hough grid cell)
+  min_line_length = 50  # minimum number of pixels making up a line
+  max_line_gap = 20  # maximum gap in pixels between connectable line segments
+  line_image = np.copy(img)  # creating a copy of the image to draw lines on
+
+  # Run Hough on edge detected image
+  # Output "lines" is an array containing endpoints of detected line segments
+  lines = cv2.HoughLinesP(edges, rho, theta, threshold, np.array([]),
+                      min_line_length, max_line_gap)
   if lines.shape[0] < num_lines:
     return None
   # Initialize x/y's for min/max computations
-  min_x = 2000
-  max_x = -2000
-  min_y = 2000
-  max_y = -2000
+  # TODO account for tilted angles
+  min_x = None
+  max_x = None
+  min_y = None
+  max_y = None
   for i in range(num_lines):
     line = lines[i]
-    for rho,theta in line:
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a*rho
-        y0 = b*rho
-        x1 = int(x0 + 1000*(-b))
-        y1 = int(y0 + 1000*(a))
-        x2 = int(x0 - 1000*(-b))
-        y2 = int(y0 - 1000*(a))
-        if x1 < -900 or x2 < -900:
-          min_y = min(min_y, min(y1, y2))
-        if x1 > 900 or x2 > 900:
-          max_y = max(max_y, max(y1, y2))
-        if y1 < -900 or y2 < -900:
-          min_x = min(min_x, min(x1, x2))
-        if y1 > 900 or y2 > 900:
-          max_x = max(max_x, max(x1, x2))
-        if display_hough_lines:
-          cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+  # for line in lines:
+    for x1,y1,x2,y2 in line:
+      
+
+      if not min_x:
+        min_x = x1
+        max_x = x2
+        min_y = y1
+        max_y = y2
+
+      min_x = min(min_x, min(x1,x2))
+      max_x = max(max_x, max(x1,x2))
+      min_y = min(min_y, min(y1,y2))
+      max_y = max(max_y, max(y1,y2))
 
   if display_hough_lines:
-    cv2.imshow('threshold',threshold_img)
+    cv2.line(line_image,(min_x,min_y),(max_x,min_y),(0,0,255),2)
+    cv2.line(line_image,(min_x,min_y),(min_x,max_y),(0,0,255),2)
+    cv2.line(line_image,(min_x,max_y),(max_x,max_y),(0,0,255),2)
+    cv2.line(line_image,(max_x,min_y),(max_x,max_y),(0,0,255),2)
     cv2.imshow('edges',edges)
-    cv2.imshow('houghlines.jpg',img)
-    while(1):
-        k = cv2.waitKey(5) & 0xFF
-        if k == 27:
-          break
+    cv2.imshow('houghlines.jpg',line_image)
   print("NW: (" + str(min_x) + "," + str(min_y) + ") SE: (" + str(max_x) + "," + str(max_y) + ")")
   return min_x, min_y, max_x, max_y
 
@@ -97,5 +100,5 @@ def run():
         running = False
         break
 
-run()
+# run()
 # """

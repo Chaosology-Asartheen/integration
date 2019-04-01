@@ -45,7 +45,7 @@ DISPLAY = True
 DISPLAY_INTERMEDIATE = True
 DISPLAY_HOUGH = True
 MAX_CUE_AREA = 1000
-USING_CAMERA = False
+USING_CAMERA = True
 MIN_RADIUS = .025
 MAX_RADIUS = .0485
 RESIZE_FRAME_WIDTH = 800
@@ -222,7 +222,7 @@ def main():
     balls = init_ballinfo()
 
     if USING_CAMERA:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
     running = True
     while running:
         frame = None
@@ -267,4 +267,4 @@ def main():
         cap.release()
     cv2.destroyAllWindows()
 
-# main()
+main()

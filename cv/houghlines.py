@@ -39,7 +39,8 @@ def compute_lines(img, display_hough_lines):
   # Output "lines" is an array containing endpoints of detected line segments
   lines = cv2.HoughLinesP(edges, rho, theta, threshold, np.array([]),
                       min_line_length, max_line_gap)
-  if lines.shape[0] < num_lines:
+
+  if not lines.shape or lines.shape[0] < num_lines:
     return None
   # Initialize x/y's for min/max computations
   # TODO account for tilted angles

@@ -1,6 +1,6 @@
-from physics.coordinates import Coordinates
-from physics.vector import Vector
-from pool.ball_type import BallType
+from pool.src.physics.coordinates import Coordinates
+from pool.src.physics.vector import Vector
+from pool.src.pool.ball_type import BallType
 
 
 class PoolBall:

@@ -5,8 +5,8 @@ from typing import Optional
 
 import numpy as np
 
-from physics.coordinates import Coordinates
-from physics.vector import Vector
+from pool.src.physics.coordinates import Coordinates
+from pool.src.physics.vector import Vector
 
 
 def get_distance(a: Coordinates, b=Coordinates(0, 0)) -> float:
@@ -307,7 +307,7 @@ def get_point_on_line_distance_from_point(line_start, line_end, point, distance)
 
     a_angle = np.arccos(dot / v_point.get_magnitude() / v_line.get_magnitude())
 
-    from physics.trianglesolver import solve
+    from pool.src.physics.trianglesolver import solve
     (a_side, b_side, c_side, a_angle, b_angle, c_angle) = solve(a=a_side, c=c_side, A=a_angle, ssa_flag='obtuse')
     assert a_angle + b_angle + c_angle == np.radians(180), 'a_angle: {} \nb_angle: {}\nc_angle: {}\n'.format(a_angle,
                                                                                                              b_angle,

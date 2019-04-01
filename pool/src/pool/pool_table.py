@@ -2,17 +2,28 @@ from typing import List
 
 import numpy as np
 
-from physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
-    check_ball_wall_collision
-from physics.coordinates import Coordinates
-from physics.utility import get_distance, get_line_endpoint_within_box, check_ray_circle_intersection, \
-    get_parallel_line, get_point_on_line_distance_from_point, get_angle
-from physics.vector import Vector
-from pool.ball_type import BallType
-from pool.game_type import GameType
-from pool.pool_ball import PoolBall
+# from pool.physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
+#     check_ball_wall_collision
+# from physics.coordinates import Coordinates
+# from physics.utility import get_distance, get_line_endpoint_within_box, check_ray_circle_intersection, \
+#     get_parallel_line, get_point_on_line_distance_from_point, get_angle
+# from physics.vector import Vector
+# from pool.ball_type import BallType
+# from pool.game_type import GameType
+# from pool.pool_ball import PoolBall
 
 import sys
+
+from pool.src.physics.collisions import check_ball_wall_collision, resolve_ball_wall_collision, \
+    check_ball_ball_collision, resolve_ball_ball_collision
+from pool.src.physics.coordinates import Coordinates
+from pool.src.physics.utility import get_angle, get_distance, get_line_endpoint_within_box, get_parallel_line, \
+    check_ray_circle_intersection, get_point_on_line_distance_from_point
+from pool.src.physics.vector import Vector
+from pool.src.pool.ball_type import BallType
+from pool.src.pool.game_type import GameType
+from pool.src.pool.pool_ball import PoolBall
+
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
 print(sys.path)

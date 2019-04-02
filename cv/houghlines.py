@@ -64,6 +64,7 @@ def compute_lines(img, display_hough_lines):
       max_x = max(max_x, max(x1,x2))
       min_y = min(min_y, min(y1,y2))
       max_y = max(max_y, max(y1,y2))
+  print("NW: (" + str(min_x) + "," + str(min_y) + ") SE: (" + str(max_x) + "," + str(max_y) + ")")
 
   if display_hough_lines:
     cv2.line(line_image,(min_x,min_y),(max_x,min_y),(0,0,255),2)
@@ -72,7 +73,12 @@ def compute_lines(img, display_hough_lines):
     cv2.line(line_image,(max_x,min_y),(max_x,max_y),(0,0,255),2)
     cv2.imshow('edges',edges)
     cv2.imshow('houghlines.jpg',line_image)
-  print("NW: (" + str(min_x) + "," + str(min_y) + ") SE: (" + str(max_x) + "," + str(max_y) + ")")
+    while (1):
+      ESC_KEY = 27
+      k = cv2.waitKey(5) & 0xFF
+      if k == ESC_KEY:
+        running = False
+        break
   return min_x+BORDER_WIDTH, min_y+BORDER_WIDTH, max_x-BORDER_WIDTH, max_y-BORDER_WIDTH
 
 

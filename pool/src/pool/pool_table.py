@@ -142,7 +142,7 @@ class PoolTable:
 
         # TODO: Get mass, radius from a config file
         mass = 5
-        radius = 5
+        radius = 30
 
         # Convert each CVBall to a PoolBall
         for cv_ball in cv_balls:
@@ -163,6 +163,10 @@ class PoolTable:
 
         :return:
         """
+
+        if points is None:
+            self.cue_angle = None
+            return
 
         # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
         front_point = Coordinates(points[1][0], 1.0-points[1][1])
@@ -334,7 +338,7 @@ class PoolTable:
         """
 
         # If cue ball is currently pocketed, skip
-        if self.cue_ball is None:
+        if self.cue_ball is None or self.cue_angle is None:
             return
 
         # Reset lines

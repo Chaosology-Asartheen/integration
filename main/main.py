@@ -6,6 +6,7 @@ sys.path.append('/Users/skim/ws/500/cv')
 sys.path.append('/Users/skim/ws/500/pool')
 
 from cv.test import init_ballinfo, getResizedFrame, find_cuestick, find_balls, ESC_KEY
+from cv.houghlines import compute_lines
 from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_LENGTH, gui_update, gui_init
 from pool.src.pool.pool_table import PoolTable
 
@@ -14,7 +15,7 @@ def main():
     # Initialize GUI
     screen = gui_init()
 
-    USING_CAMERA = False
+    USING_CAMERA = True
     DISPLAY = False
 
     # Initialize pool table here
@@ -27,13 +28,16 @@ def main():
     if USING_CAMERA:
         cap = cv2.VideoCapture(1)
     running = True
+    i = 0
     while running:
-        frame = getResizedFrame()
-
+        frame = getResizedFrame(cap)
+        cv2.imwrite(str(i) + ".jpg", frame)
         # CV
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        cv_balls = find_balls(balls, hsv_img, frame)
-        cuestick_info = find_cuestick(hsv_img, frame)
+        # table_coords = compute_lines(frame, False)
+        table_coords = 54, 2, 665,309
+        cv_balls = find_balls(balls, hsv_img, frame, table_coords)
+        cuestick_info = find_cuestick(hsv_img, frame, table_coords)
         print('B')
 
         # Pass parameters to pool
@@ -46,11 +50,10 @@ def main():
             while (1):
                 k = cv2.waitKey(5) & 0xFF
                 if k == ESC_KEY:
-                    running = False
                     break
-
         # Here, update GUI
         gui_update(screen, table)
+        i += 1
 
     # When everything done, release the capture
     if USING_CAMERA:

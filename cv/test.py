@@ -42,7 +42,7 @@ TABLE_LENGTH = 37.5
 TABLE_WIDTH = 17.5625
 ESC_KEY = 27
 DISPLAY = True
-DISPLAY_INTERMEDIATE = True
+DISPLAY_INTERMEDIATE = False 
 DISPLAY_HOUGH = True
 MAX_CUE_AREA = 1000
 USING_CAMERA = True
@@ -72,7 +72,6 @@ def wait_escape():
         ESC_KEY = 27
         k = cv2.waitKey(5) & 0xFF
         if k == ESC_KEY:
-            running = False
             break
 
 def init_ballinfo():
@@ -204,7 +203,7 @@ def find_cuestick(hsv, frame, table_coords):
             norm_right_point = norm_coordinates(right_point[0], right_point[1], min_x, max_x, min_y, max_y)
             return [norm_mid_point, norm_left_point, norm_right_point]
 
-def getResizedFrame():
+def getResizedFrame(cap):
     if USING_CAMERA:
         ret, frame = cap.read()
     else:
@@ -267,4 +266,4 @@ def main():
         cap.release()
     cv2.destroyAllWindows()
 
-main()
+# main()

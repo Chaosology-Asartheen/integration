@@ -11,8 +11,8 @@ from pool.src.pool.ball_type import BallType
 from pool.src.pool.pool_ball import PoolBall
 from pool.src.pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1000, 1000
-TABLE_LENGTH = 800
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = 2000, 2000
+TABLE_LENGTH = 1600
 TABLE_OFFSET_X, TABLE_OFFSET_Y = 100, 100
 
 """
@@ -56,7 +56,8 @@ def clear_screen(screen):
 
 
 def draw_pool_table(screen, table: PoolTable):
-    table_color = (0, 200, 0)
+    # table_color = (0, 200, 0)
+    table_color = (0, 0, 0) # Black
 
     nw = coords_to_pygame(Coordinates(table.left, table.top), HEIGHT)
     se = coords_to_pygame(Coordinates(table.right, table.bottom), HEIGHT)
@@ -69,7 +70,7 @@ def draw_pool_table(screen, table: PoolTable):
 
     # Draw table pockets
     for hole_center in table.hole_centers:
-        pocket_color = (0, 0, 0)
+        pocket_color = (255, 255, 255)
         p = coords_to_pygame(hole_center, HEIGHT)
         x, y, r = int(p.x), int(p.y), int(table.hole_radius)
         pygame.draw.circle(screen, pocket_color, (x, y), r)

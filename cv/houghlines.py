@@ -86,7 +86,7 @@ def resize_img(img):
 
 # """ If running individually
 def run():
-  img = cv2.imread('1.jpg')
+  img = cv2.imread('cv/img/8.jpg')
   img = resize_img(img)
 
   display_hough_lines = True

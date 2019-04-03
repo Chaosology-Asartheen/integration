@@ -1,9 +1,15 @@
 import cv2
 
 import sys
-sys.path.append('/Users/skim/ws/500')
-sys.path.append('/Users/skim/ws/500/cv')
-sys.path.append('/Users/skim/ws/500/pool')
+import time
+
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
+# print(sys.path)
+# sys.path.append('/Users/skim/ws/500')
+# sys.path.append('/Users/skim/ws/500/cv')
+# sys.path.append('/Users/skim/ws/500/pool')
 
 from cv.test import init_ballinfo, getResizedFrame, find_cuestick, find_balls, ESC_KEY
 from cv.houghlines import compute_lines
@@ -26,19 +32,27 @@ def main():
     # Initialize CV info
     balls = init_ballinfo()
     if USING_CAMERA:
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
     running = True
     i = 0
     while running:
+        time.sleep(.5)
         frame = getResizedFrame(cap)
-        cv2.imwrite(str(i) + ".jpg", frame)
         # CV
-        hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         # table_coords = compute_lines(frame, False)
-        table_coords = 54, 2, 665,309
-        cv_balls = find_balls(balls, hsv_img, frame, table_coords)
-        cuestick_info = find_cuestick(hsv_img, frame, table_coords)
-        print('B')
+        # frame = cv2.imread("purple.jpg")
+        table_coords = 188,107,1148,554
+        if not table_coords:
+            continue
+        x1,y1,x2,y2 = table_coords
+        frame = frame[int(y1):int(y2),int(x1):int(x2)]
+        
+        
+        hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        cv_balls = find_balls(balls, hsv_img, frame)
+        cuestick_info = find_cuestick(hsv_img, frame)
+        if not cuestick_info:
+            print("LOREMS:FOINSD:OIASDFO:EINFOIENF:OIENF:OINE:OSFINW:AOIRFSLNK:OEISNFOINLFKSD")
 
         # Pass parameters to pool
         table.place_cv_balls(cv_balls)

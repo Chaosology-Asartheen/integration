@@ -142,7 +142,7 @@ class PoolTable:
 
         # TODO: Get mass, radius from a config file
         mass = 5
-        radius = 30
+        radius = 20
 
         # Convert each CVBall to a PoolBall
         for cv_ball in cv_balls:
@@ -168,9 +168,23 @@ class PoolTable:
             self.cue_angle = None
             return
 
+        # Check if cue stick line intersects the cue ball
+        # def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
+        p1, p2 = self.convert_cv_coords(points[1][0], points[1][1]), self.convert_cv_coords(points[2][0], points[2][1])
+        if not check_ray_circle_intersection(p1, p2, self.cue_ball.pos, self.cue_ball.radius):
+            print("-----------------------------------------------------")
+            print("-----> CUE STICK NOT INTERSECTING THE CUE BALL <-----")
+            print("-----------------------------------------------------")
+            self.cue_angle = None
+            return
+        else:
+            print("#####################################################")
+            print("#####> CUE STICK NOT INTERSECTING THE CUE BALL <#####")
+            print("#####################################################")
+
         # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
-        front_point = Coordinates(points[1][0], 1.0-points[1][1])
-        back_point = Coordinates(points[0][0], 1.0-points[0][1])
+        back_point = Coordinates(points[1][0], 1.0-points[1][1])
+        front_point = Coordinates(points[0][0], 1.0-points[0][1])
 
         # ¯\_(ツ)_/¯
         self.cue_angle = get_angle(back_point, front_point)
@@ -339,6 +353,13 @@ class PoolTable:
 
         # If cue ball is currently pocketed, skip
         if self.cue_ball is None or self.cue_angle is None:
+            # Erase all lines
+            self.object_deflect_line_start = None
+            self.object_deflect_line_end = None
+
+            self.cue_deflect_line_start = None
+            self.cue_deflect_line_end = None
+
             return
 
         # Reset lines

@@ -32,7 +32,7 @@ def main():
     # Initialize CV info
     balls = init_ballinfo()
     if USING_CAMERA:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
     running = True
     i = 0
     while running:
@@ -41,7 +41,7 @@ def main():
         # CV
         # table_coords = compute_lines(frame, False)
         # frame = cv2.imread("purple.jpg")
-        table_coords = 188,107,1148,554
+        table_coords = 200,176,1150,637
         if not table_coords:
             continue
         x1,y1,x2,y2 = table_coords

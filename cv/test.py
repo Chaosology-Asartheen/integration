@@ -275,7 +275,7 @@ def main():
     balls = init_ballinfo()
 
     if USING_CAMERA:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
         # cap.set(cv2.CV_CAP_PROP_BRIGHTNESS, 50)
     running = True
     while running:
@@ -304,7 +304,7 @@ def main():
         # table_coords = compute_lines(frame, DISPLAY_HOUGH)
         # table_coords = 76,24,642,282
         
-        table_coords = 188,107,1148,554
+        table_coords = 200,176,1150,637
         if not table_coords:
             continue
         x1,y1,x2,y2 = table_coords

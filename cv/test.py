@@ -146,7 +146,7 @@ def find_ball(ball, hsv, frame, cv_balls):
     # print("table_pixel_width " + str(table_pixel_width))
     # min_contour_area = table_pixel_width * 1.15
     min_contour_area = table_pixel_width * ball.min_contour
-    max_contour_area = table_pixel_width * 2.5
+    max_contour_area = table_pixel_width * 2.7
     if (ball.str_rep == "white"):
         max_contour_area = table_pixel_width * 3
     if (ball.str_rep == "blue"):
@@ -271,7 +271,31 @@ def getResizedFrame(cap):
 
     return frame
 
+def show_edges():
+    # cap = cv2.VideoCapture(0)
+    while True:
+        # ret, img = cap.read()
+        # img = getResizedFrame(cap)
+        # cv2.imwrite('test_imgs/4.jpg', img)
+        print('lol')
+        img = cv2.imread('../test_imgs/3.jpg')
+        table_coords = 188,107,1148,554
+        if not table_coords:
+            continue
+        x1,y1,x2,y2 = table_coords
+        img = img[int(y1):int(y2),int(x1):int(x2)]
+        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        kernel_size = 5
+        blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size),0)
+
+        low_threshold = 50
+        high_threshold = 100
+        edges = cv2.Canny(img, low_threshold, high_threshold)
+        cv2.imshow('edges', edges)
+        wait_escape()
+
 def main():
+    show_edges()
     balls = init_ballinfo()
 
     if USING_CAMERA:

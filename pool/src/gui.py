@@ -11,9 +11,10 @@ from pool.src.pool.ball_type import BallType
 from pool.src.pool.pool_ball import PoolBall
 from pool.src.pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 2000, 2000
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1700, 1700
 TABLE_LENGTH = 1700
-TABLE_OFFSET_X, TABLE_OFFSET_Y = 100, 100
+TABLE_WIDTH = TABLE_LENGTH / 2.1352313167
+TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
 
 BACKGROUND_COLOR = (0, 0, 0)
 TABLE_COLOR = (0, 0, 0)
@@ -237,7 +238,7 @@ def main():
 
     # Create pool table
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
-    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2.1352313167), HEIGHT)
+    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
     table = PoolTable(nw, se)
 
     while 1:

@@ -36,7 +36,7 @@ def main():
     running = True
     i = 0
     while running:
-        time.sleep(.5)
+        # time.sleep(.5)
         frame = getResizedFrame(cap)
         # CV
         # table_coords = compute_lines(frame, False)

@@ -90,6 +90,8 @@ def resize_img(img):
   img = cv2.resize(img, (RESIZE_IMG_WIDTH, resize_img_height))
   return img
 
+
+
 # """ If running individually
 def run():
   img = cv2.imread('cv/img/8.jpg')
@@ -110,5 +112,5 @@ def run():
         running = False
         break
 
-# run()
-# """
+if __name__ == "__main__":
+    run()

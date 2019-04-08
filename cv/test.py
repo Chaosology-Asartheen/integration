@@ -279,7 +279,7 @@ def show_edges():
         # cv2.imwrite('test_imgs/4.jpg', img)
         print('lol')
         img = cv2.imread('../test_imgs/3.jpg')
-        table_coords = 188,107,1148,554
+        table_coords = 160,130,1200,550
         if not table_coords:
             continue
         x1,y1,x2,y2 = table_coords
@@ -288,8 +288,8 @@ def show_edges():
         kernel_size = 5
         blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size),0)
 
-        low_threshold = 50
-        high_threshold = 100
+        low_threshold = 400
+        high_threshold = 400
         edges = cv2.Canny(img, low_threshold, high_threshold)
         cv2.imshow('edges', edges)
         wait_escape()

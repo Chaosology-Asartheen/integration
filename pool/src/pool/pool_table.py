@@ -1,18 +1,7 @@
+import sys
 from typing import List
 
 import numpy as np
-
-# from pool.physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
-#     check_ball_wall_collision
-# from physics.coordinates import Coordinates
-# from physics.utility import get_distance, get_line_endpoint_within_box, check_ray_circle_intersection, \
-#     get_parallel_line, get_point_on_line_distance_from_point, get_angle
-# from physics.vector import Vector
-# from pool.ball_type import BallType
-# from pool.game_type import GameType
-# from pool.pool_ball import PoolBall
-
-import sys
 
 from pool.src.physics.collisions import check_ball_wall_collision, resolve_ball_wall_collision, \
     check_ball_ball_collision, resolve_ball_ball_collision
@@ -23,6 +12,16 @@ from pool.src.physics.vector import Vector
 from pool.src.pool.ball_type import BallType
 from pool.src.pool.game_type import GameType
 from pool.src.pool.pool_ball import PoolBall
+
+# from pool.physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
+#     check_ball_wall_collision
+# from physics.coordinates import Coordinates
+# from physics.utility import get_distance, get_line_endpoint_within_box, check_ray_circle_intersection, \
+#     get_parallel_line, get_point_on_line_distance_from_point, get_angle
+# from physics.vector import Vector
+# from pool.ball_type import BallType
+# from pool.game_type import GameType
+# from pool.pool_ball import PoolBall
 
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
@@ -68,8 +67,10 @@ class PoolTable:
             self.set_cv_cue_stick(cv_cue_points)
 
         # Deflection lines
-        self.object_deflect_line_start = None
-        self.object_deflect_line_end = None
+        # self.object_deflect_line_start = None
+        # self.object_deflect_line_end = None
+        # Deflection lines for each specific object ball
+        self.object_deflect_lines = {}  # Elements are (line_start, line_end)
 
         # Cue deflect line start = cue line end (ghost ball location)
         self.cue_deflect_line_start = None
@@ -152,7 +153,6 @@ class PoolTable:
             if ball_type is BallType.CUE:
                 self.cue_ball = ball
 
-
     def set_cv_cue_stick(self, points):
         """
         Use 2 points to get the cue stick angle.
@@ -161,8 +161,8 @@ class PoolTable:
         """
 
         # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
-        front_point = Coordinates(points[1][0], 1.0-points[1][1])
-        back_point = Coordinates(points[0][0], 1.0-points[0][1])
+        front_point = Coordinates(points[1][0], 1.0 - points[1][1])
+        back_point = Coordinates(points[0][0], 1.0 - points[0][1])
 
         # ¯\_(ツ)_/¯
         self.cue_angle = get_angle(back_point, front_point)
@@ -318,25 +318,71 @@ class PoolTable:
                 print("CUE BALL POCKETED...")
                 print("CUE BALL POS: {}".format(self.cue_ball.pos))
 
-    def get_deflection(self, pos: Coordinates, angle: float) -> Coordinates:
+    def get_deflection(self, pos: Coordinates, radius: float, angle: float) -> (
+            Coordinates, Coordinates, BallType, Coordinates):
         """
-        :param pos:
-        :param angle:
+        Take in a position+radius of the starting 'ball' position and an angle that a pool ball will be struck.
+        Return where the 'ghost ball' would be as a result.
+
+        :param pos: Starting position of the 'ball' (could be another 'ghost ball')
+        :param radius: Radius of the 'ball'
+        :param angle: Angle that the ball will be struck at
         :return:
+
+            object_deflect_line_start
+            object_defect_line_end
+
+            cue_line_end
+            cue_deflect_line_end
         """
+
+        # Return values
+        result_start, result_end = None, None
 
         nw = Coordinates(self.left, self.top)
         se = Coordinates(self.right, self.bottom)
 
-        start_mid = pos  # Line start is cue ball position
-        cue_mid_end = self.cue_deflect_line_start = get_line_endpoint_within_box(start_mid, angle, nw, se, self.cue_ball.radius)
+        # Start with ball colliding with the nearest cushion
+        mid_start = pos  # Line start is cue ball position
+        mid_end = result_start = get_line_endpoint_within_box(mid_start, angle, nw, se, self.cue_ball.radius)
 
-        cue_top_start, cue_top_end = get_parallel_line(start_mid, cue_mid_end, self.cue_ball.radius, True)
-        cue_bot_start, cue_bot_end = get_parallel_line(start_mid, cue_mid_end, self.cue_ball.radius, False)
+        top_start, top_end = get_parallel_line(mid_start, mid_end, radius, True)
+        bot_start, bot_end = get_parallel_line(mid_start, mid_end, radius, False)
 
+        # Then, check if ball collides with any other balls
+        balls_by_distance = list(self.balls.values())
+        balls_by_distance.sort(key=lambda b: get_distance(mid_start, b.pos))
 
+        for ball in balls_by_distance:
+            if (check_ray_circle_intersection(top_start, top_end, ball.pos, ball.radius) or
+                    check_ray_circle_intersection(bot_start, bot_end, ball.pos, ball.radius)):
 
+                result_start = get_point_on_line_distance_from_point(mid_start, mid_end, ball.pos, 2 * ball.radius)
 
+                # Set object ball deflection line
+                self.object_deflect_line_start = ball.pos
+                object_ball_angle = get_angle(ball.pos, self.cue_deflect_line_start)
+                self.object_deflect_line_end = get_line_endpoint_within_box(ball.pos, object_ball_angle, nw, se,
+                                                                            self.cue_ball.radius)
+
+                # Set cue ball deflection line
+                cue_deflect_angle = get_angle(self.object_deflect_line_end, self.object_deflect_line_start)
+                cue_object_angle = get_angle(ball.pos, self.cue_ball.pos)
+
+                if self.cue_angle % 360 == 0:
+                    # Edge case when perfectly to the right
+                    cue_deflect_angle = (cue_deflect_angle + 90) % 360
+                elif self.cue_angle < cue_object_angle:
+                    # print("CUE BALL GOING RIGHT OF OBJECT BALl")
+                    cue_deflect_angle = (cue_deflect_angle - 90) % 360
+                else:
+                    # print("CUE BALL GOING LEFT OF OBJECT BALl")
+                    cue_deflect_angle = (cue_deflect_angle + 90) % 360
+
+                self.cue_deflect_line_end = get_line_endpoint_within_box(self.cue_deflect_line_start, cue_deflect_angle,
+                                                                         nw, se,
+                                                                         self.cue_ball.radius)
+                return result_start, result_end
 
     def set_lines(self):
         """
@@ -354,14 +400,18 @@ class PoolTable:
             return
 
         # Reset lines
-        self.object_deflect_line_start = self.object_deflect_line_end = self.cue_deflect_line_end = None
+        # self.object_deflect_line_start = self.object_deflect_line_end = self.cue_deflect_line_end = None
+        self.cue_deflect_line_end = None
+        self.object_deflect_lines = {}
+
 
         angle = self.cue_angle
         nw = Coordinates(self.left, self.top)
         se = Coordinates(self.right, self.bottom)
 
         cue_mid_start = self.cue_ball.pos  # Line start is cue ball position
-        cue_mid_end = self.cue_deflect_line_start = get_line_endpoint_within_box(cue_mid_start, angle, nw, se, self.cue_ball.radius)
+        cue_mid_end = self.cue_deflect_line_start = get_line_endpoint_within_box(cue_mid_start, angle, nw, se,
+                                                                                 self.cue_ball.radius)
 
         cue_top_start, cue_top_end = get_parallel_line(cue_mid_start, cue_mid_end, self.cue_ball.radius, True)
         cue_bot_start, cue_bot_end = get_parallel_line(cue_mid_start, cue_mid_end, self.cue_ball.radius, False)
@@ -378,16 +428,24 @@ class PoolTable:
 
                 # print("CUE BALL INTERSECTING {}".format(ball))
 
-                self.cue_deflect_line_start = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end, ball.pos,
+                self.cue_deflect_line_start = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end,
+                                                                                    ball.pos,
                                                                                     2 * ball.radius)
 
                 # Set object ball deflection line
-                self.object_deflect_line_start = ball.pos
+                if ball.ball_type not in self.object_deflect_lines:
+                    self.object_deflect_lines[ball.ball_type] = [None, None]
+
+                # self.object_deflect_line_start = ball.pos
+                self.object_deflect_lines[ball.ball_type][0] = ball.pos
                 object_ball_angle = get_angle(ball.pos, self.cue_deflect_line_start)
-                self.object_deflect_line_end = get_line_endpoint_within_box(ball.pos, object_ball_angle, nw, se, self.cue_ball.radius)
+                # self.object_deflect_line_end = get_line_endpoint_within_box(ball.pos, object_ball_angle, nw, se,
+                #                                                             self.cue_ball.radius)
+                self.object_deflect_lines[ball.ball_type][1] = get_line_endpoint_within_box(ball.pos, object_ball_angle, nw, se,
+                                                                            self.cue_ball.radius)
 
                 # Set cue ball deflection line
-                cue_deflect_angle = get_angle(self.object_deflect_line_end, self.object_deflect_line_start)
+                cue_deflect_angle = get_angle(self.object_deflect_lines[ball.ball_type][1], self.object_deflect_lines[ball.ball_type][0])
                 cue_object_angle = get_angle(ball.pos, self.cue_ball.pos)
 
                 if self.cue_angle % 360 == 0:
@@ -400,7 +458,8 @@ class PoolTable:
                     # print("CUE BALL GOING LEFT OF OBJECT BALl")
                     cue_deflect_angle = (cue_deflect_angle + 90) % 360
 
-                self.cue_deflect_line_end = get_line_endpoint_within_box(self.cue_deflect_line_start, cue_deflect_angle, nw, se,
+                self.cue_deflect_line_end = get_line_endpoint_within_box(self.cue_deflect_line_start, cue_deflect_angle,
+                                                                         nw, se,
                                                                          self.cue_ball.radius)
                 return
 
@@ -412,14 +471,14 @@ class PoolTable:
                                   vel=Vector(self.cue_deflect_line_start.x - self.cue_ball.pos.x,
                                              self.cue_deflect_line_start.y - self.cue_ball.pos.y).unit())
 
-
         ball_wall_collision = check_ball_wall_collision(ghost_cue_ball, self.top, self.left, self.bottom, self.right)
         assert ball_wall_collision is not None, "there should be a ball-wall collision, bc there were no ball-ball collisions"
         resolve_ball_wall_collision(ghost_cue_ball, ball_wall_collision)
 
         # The ghost cue ball now has a new velocity vector we can use to draw the deflection line
         deflection_angle = ghost_cue_ball.vel.get_angle()
-        self.cue_deflect_line_end = get_line_endpoint_within_box(self.cue_deflect_line_start, deflection_angle, nw, se, self.cue_ball.radius)
+        self.cue_deflect_line_end = get_line_endpoint_within_box(self.cue_deflect_line_start, deflection_angle, nw, se,
+                                                                 self.cue_ball.radius)
 
     def time_step(self):
         balls = list(self.balls.values())

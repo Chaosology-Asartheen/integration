@@ -9,7 +9,7 @@ MIN_DIST = 20
 USING_CAMERA = True
 RESIZE_FRAME_WIDTH = 600
  
-def run_hough_circles(image, earlier):
+def run_hough_circles(image):
   output = image.copy()
   gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
   # kernel_size = 5
@@ -39,17 +39,13 @@ def run_hough_circles(image, earlier):
     # show the output image
     cv2.imshow("output", output)
     cv2.waitKey(0)
-    now = datetime.now()
-    print(now - earlier)
   else:
     print("No circles :(")
-  return now
 
 def main():
   if USING_CAMERA:
     cap = cv2.VideoCapture(1)
   
-  earlier = datetime.now()
   while True:
     # frame = cv2.imread("test_imgs/1.jpg")
     if USING_CAMERA:
@@ -58,8 +54,7 @@ def main():
       frame_width = frame.shape[1]
       resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
       frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
-      now = run_hough_circles(frame, earlier)
-      earlier = now
+      run_hough_circles(frame)
   # # construct the argument parser and parse the arguments
   # ap = argparse.ArgumentParser()
   # ap.add_argument("-i", "--image", required = True, help = "Path to the image")

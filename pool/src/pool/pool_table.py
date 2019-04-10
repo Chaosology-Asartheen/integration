@@ -26,7 +26,6 @@ from pool.src.pool.pool_ball import PoolBall
 
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
-print(sys.path)
 from cv.test import CVBall
 
 LONG_DIAMONDS = 8
@@ -34,6 +33,7 @@ SHORT_DIAMONDS = 4
 CUE_START_DIAMOND = 2
 RACK_START_DIAMOND = 6
 
+# TODO: Get these from a config file
 BALL_MASS = 5
 BALL_RADIUS = 10
 
@@ -140,16 +140,12 @@ class PoolTable:
         # Initialize empty ball list
         self.balls = {}
 
-        # TODO: Get mass, radius from a config file
-        mass = 5
-        radius = 5
-
         # Convert each CVBall to a PoolBall
         for cv_ball in cv_balls:
             pos = self.convert_cv_coords(cv_ball.x, cv_ball.y)
             ball_type = self.convert_cv_color(cv_ball.color)
 
-            ball = PoolBall(ball_type, pos, mass, radius)
+            ball = PoolBall(ball_type, pos, BALL_MASS, BALL_RADIUS)
 
             self.balls[ball_type] = ball
 

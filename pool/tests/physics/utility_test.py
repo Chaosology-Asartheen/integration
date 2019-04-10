@@ -1,13 +1,18 @@
 import sys
 import unittest
 
-sys.path.append('../../src')
+sys.path.append('/Users/skim/ws/500/')
 
-from physics.coordinates import Coordinates
-from physics.utility import check_ray_circle_intersection, get_distance, check_ray_line_intersection, \
-    get_ray_circle_intersection, get_line_endpoint_within_box, get_angle, get_parallel_line
+from pool.src.physics.coordinates import Coordinates
+from pool.src.physics.utility import check_ray_circle_intersection, check_ray_line_intersection, get_distance, \
+    get_line_endpoint_within_box, get_angle, get_parallel_line
 
 FLOAT_PLACES = 7  # Rounding error for floating point equality
+
+
+def get_ray_circle_intersection(p1, p2, c, r):
+    pass
+
 
 class CoordinatesTest(unittest.TestCase):
 

@@ -322,6 +322,26 @@ class PoolTable:
                 print("CUE BALL POCKETED...")
                 print("CUE BALL POS: {}".format(self.cue_ball.pos))
 
+    def get_deflection(self, pos: Coordinates, angle: float) -> Coordinates:
+        """
+        :param pos:
+        :param angle:
+        :return:
+        """
+
+        nw = Coordinates(self.left, self.top)
+        se = Coordinates(self.right, self.bottom)
+
+        start_mid = pos  # Line start is cue ball position
+        cue_mid_end = self.cue_deflect_line_start = get_line_endpoint_within_box(start_mid, angle, nw, se, self.cue_ball.radius)
+
+        cue_top_start, cue_top_end = get_parallel_line(start_mid, cue_mid_end, self.cue_ball.radius, True)
+        cue_bot_start, cue_bot_end = get_parallel_line(start_mid, cue_mid_end, self.cue_ball.radius, False)
+
+
+
+
+
     def set_lines(self):
         """
         Sets:

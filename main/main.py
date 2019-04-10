@@ -1,6 +1,7 @@
+import sys
+
 import cv2
 
-import sys
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
 sys.path.append('/Users/skim/ws/500/pool')
@@ -8,6 +9,21 @@ sys.path.append('/Users/skim/ws/500/pool')
 from cv.test import init_ballinfo, getResizedFrame, find_cuestick, find_balls, ESC_KEY
 from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_LENGTH, gui_update, gui_init
 from pool.src.pool.pool_table import PoolTable
+
+
+def gui_main():
+    """
+    Main function for pygame to be run by itself.
+    """
+    screen = gui_init()
+
+    # Create pool table
+    nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
+    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+    table = PoolTable(nw, se)
+
+    while 1:
+        gui_update(screen, table)
 
 
 def main():
@@ -58,5 +74,7 @@ def main():
 
     cv2.destroyAllWindows()
 
+
 if __name__ == '__main__':
-    main()
+    # main()
+    gui_main()

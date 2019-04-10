@@ -174,7 +174,7 @@ def gui_update(screen, table):
             cue_pos = table.cue_ball.pos
 
             table.cue_angle = get_angle(target_pos, cue_pos)
-            print('AFTER SETTING cue_angle', table.cue_angle)
+            # print('AFTER SETTING cue_angle', table.cue_angle)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 sys.exit()
@@ -246,7 +246,7 @@ def main():
                 cue_pos = table.cue_ball.pos
 
                 table.cue_angle = get_angle(target_pos, cue_pos)
-                print('AFTER SETTING cue_angle', table.cue_angle)
+                # print('AFTER SETTING cue_angle', table.cue_angle)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     sys.exit()

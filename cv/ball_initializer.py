@@ -1,4 +1,5 @@
 from ball_info import BallInfo
+import numpy as np
 
 # HSV values for different color balls
 # Range is 180,255,255
@@ -68,5 +69,5 @@ def init_balls(ball_list):
     if ball_str in all_ball_info:
       balls.append(all_ball_info[ball_str])
     else:
-      print("Invalid ball string")
+      print("Invalid ball string: " + ball_str)
   return balls

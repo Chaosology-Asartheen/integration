@@ -6,8 +6,8 @@ from datetime import datetime
 
 DP = 1.2
 MIN_DIST = 20
-USING_CAMERA = True
-RESIZE_FRAME_WIDTH = 600
+USING_CAMERA = False
+RESIZE_FRAME_WIDTH = 800
  
 def run_hough_circles(image):
   output = image.copy()
@@ -47,21 +47,16 @@ def main():
     cap = cv2.VideoCapture(1)
   
   while True:
-    # frame = cv2.imread("test_imgs/1.jpg")
     if USING_CAMERA:
       ret, frame = cap.read()
-      frame_height = frame.shape[0]
-      frame_width = frame.shape[1]
-      resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
-      frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
-      run_hough_circles(frame)
-  # # construct the argument parser and parse the arguments
-  # ap = argparse.ArgumentParser()
-  # ap.add_argument("-i", "--image", required = True, help = "Path to the image")
-  # args = vars(ap.parse_args())
+    else:
+      frame = cv2.imread("circle_imgs/5.jpg")
+    frame_height = frame.shape[0]
+    frame_width = frame.shape[1]
+    resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
+    frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
+    run_hough_circles(frame)
 
-  # # load the image, clone it for output, and then convert it to grayscale
-  # image = cv2.imread(args["image"])
 
 if __name__ == "__main__":
     main()

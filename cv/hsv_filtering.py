@@ -1,12 +1,11 @@
 import ball_initializer
 import constants
 import cv2
+import hough_lines
 import numpy as np
 import imutils
+from cv_ball import CVBall
 from datetime import datetime
-from houghlines import compute_lines
-
-ball_list
 
 # cue_upper = np.array([18,128,255])
 cue_lower = np.array([180,240,240]) #cue ball, using rgb as bounds
@@ -17,16 +16,6 @@ DISPLAY = False
 DISPLAY_INTERMEDIATE = False
 DISPLAY_HOUGH = True
 USING_CAMERA = True
-
-
-class CVBall:
-    def __init__(self, x, y, color):
-        self.x = x
-        self.y = y
-        self.color = color
-
-    def __repr__(self):
-        return "%s: (%f, %f)" % (self.color, self.x, self.y)
 
 def wait_escape():
     while(1):
@@ -254,7 +243,7 @@ def main():
             cv2.imshow('frame', frame)
             wait_escape()
 
-        # table_coords = compute_lines(frame, DISPLAY_HOUGH)
+        # table_coords = hough_lines.compute_lines(frame, DISPLAY_HOUGH)
         # table_coords = 76,24,642,282
         
         table_coords = 188,107,1148,554

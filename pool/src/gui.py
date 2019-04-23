@@ -35,7 +35,6 @@ def coords_from_pygame(xy: (float, float), height: float) -> Coordinates:
 
     return Coordinates(xy[0], height - xy[1])
 
-
 """
 PyGame functions.
 """
@@ -74,29 +73,19 @@ def draw_pool_table(screen, table: PoolTable):
         x, y, r = int(p.x), int(p.y), int(table.hole_radius)
         pygame.draw.circle(screen, pocket_color, (x, y), r)
 
-
-def draw_cue_ball_deflection_line(screen, table: PoolTable):
-    if table.cue_deflect_line_end is None:
+def draw_cue_stick(screen, table: PoolTable):
+    if table.cue_front_point is None or table.cue_back_point is None:
         return
 
-    p1 = coords_to_pygame(table.cue_deflect_line_start, HEIGHT)
-    p2 = coords_to_pygame(table.cue_deflect_line_end, HEIGHT)
-
-    x1, y1 = int(p1.x), int(p1.y)
-    x2, y2 = int(p2.x), int(p2.y)
-    color = (255, 255, 255)
+    x1, y1 = int(table.cue_front_point.x), int(table.cue_front_point.y)
+    x2, y2 = int(table.cue_back_point.x), int(table.cue_back_point.y)
+    print("DRAWING CUE STICK AT POINTS: {},{} and {},{}".format(x1, y1, x2, y2))
+    color = (165, 42, 42)
 
     pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
 
-    # # DRAW GHOST BALL
-    p = coords_to_pygame(table.cue_deflect_line_end, HEIGHT)
 
-    x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
-    color = table.cue_ball.ball_type.color
-    pygame.gfxdraw.aacircle(screen, x, y, r, color)
-
-
-def draw_object_ball_deflection_line(screen, table: PoolTable):
+def draw_ball_lines(screen, table: PoolTable):
     if table.ghost_ball_lines is {}:
         return
 
@@ -197,11 +186,8 @@ def gui_update(screen, table):
 
     # Draw pool table
     draw_pool_table(screen, table)
-
-    draw_cue_stick_line(screen, table)
-    draw_cue_ghost_ball(screen, table)
-    draw_cue_ball_deflection_line(screen, table)
-    draw_object_ball_deflection_line(screen, table)
+    draw_cue_stick(screen, table)
+    draw_ball_lines(screen, table)
 
     # Draw all pool balls
     for ball in balls:
@@ -214,72 +200,17 @@ def main():
     """
     Main function for pygame to be run by itself.
     """
+    # Initialize GUI
     screen = gui_init()
 
-    # Create pool table
+    # Initialize pool table here
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
     table = PoolTable(nw, se)
 
     while 1:
-        # Get just the list of balls to iterate easily
-        balls = list(table.balls.values())
-
-        clear_screen()
-
-        # Check Pygame events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONUP:
-                # These positions assume origin lower-left
-                target_pos = coords_from_pygame(pygame.mouse.get_pos(), HEIGHT)
-                cue_pos = table.cue_ball.pos
-
-                table.cue_angle = get_angle(target_pos, cue_pos)
-                # print('AFTER SETTING cue_angle', table.cue_angle)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
-                    sys.exit()
-                elif event.key == pygame.K_b:
-                    # BREAK cue ball
-                    mag = 500.0
-                    force = Vector(mag * np.cos(np.radians(table.cue_angle)),
-                                   mag * np.sin(np.radians(table.cue_angle)))
-                    table.balls[BallType.CUE].apply_force(force)
-                elif event.key == pygame.K_SPACE:
-                    # Strike cue ball
-                    mag = 50.0
-                    force = Vector(mag * np.cos(np.radians(table.cue_angle)),
-                                   mag * np.sin(np.radians(table.cue_angle)))
-                    table.balls[BallType.CUE].apply_force(force)
-                elif event.key == pygame.K_p:
-                    # DEBUG set all speeds to 0
-                    for ball in balls:
-                        ball.vel.x, ball.vel.y = 0, 0
-                elif event.key == pygame.K_r:
-                    # DEBUG reset
-                    # Create pool table
-                    nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
-                    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
-                    table = PoolTable(nw, se)
-
-        # Table time step
-        table.time_step()
-
-        # Draw pool table
-        draw_pool_table(screen, table)
-
-        draw_cue_stick_line(screen, table)
-        draw_cue_ghost_ball(screen, table)
-        draw_cue_ball_deflection_line(screen, table)
-        draw_object_ball_deflection_line(screen, table)
-
-        # Draw all pool balls
-        for ball in balls:
-            draw_pool_ball(screen, ball)
-
-        pygame.display.flip()
+        # Here, update GUI
+        gui_update(screen, table)
 
 # if __name__ == '__main__':
 #     main()

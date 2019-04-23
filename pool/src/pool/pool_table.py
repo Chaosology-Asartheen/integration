@@ -62,6 +62,7 @@ class PoolTable:
 
         # Cue stick
         if cv_cue_points is None:
+            self.cue_front_point = self.cue_back_point = None
             self.cue_angle = 0
         else:
             self.set_cv_cue_stick(cv_cue_points)
@@ -157,11 +158,11 @@ class PoolTable:
         """
 
         # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
-        front_point = Coordinates(points[1][0], 1.0 - points[1][1])
-        back_point = Coordinates(points[0][0], 1.0 - points[0][1])
+        self.cue_front_point = Coordinates(points[1][0], 1.0 - points[1][1])
+        self.cue_back_point = Coordinates(points[0][0], 1.0 - points[0][1])
 
         # ¯\_(ツ)_/¯
-        self.cue_angle = get_angle(back_point, front_point)
+        self.cue_angle = get_angle(self.cue_back_point, self.cue_front_point)
 
     def reset_cue_ball(self):
         self.cue_angle = 0.0

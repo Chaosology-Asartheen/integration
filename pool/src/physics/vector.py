@@ -49,7 +49,6 @@ class Vector:
         """
 
         return np.sqrt(self.x**2 + self.y**2)
-        # return get_distance(Coordinates(self.x, self.y))
 
     def get_angle(self):
         """

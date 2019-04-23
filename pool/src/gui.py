@@ -127,15 +127,33 @@ def draw_cue_ball_deflection_line(screen, table: PoolTable):
 
 
 def draw_object_ball_deflection_line(screen, table: PoolTable):
-    if table.object_deflect_lines is {}:
+    if table.ghost_ball_lines is {}:
         return
 
-    for lines in table.object_deflect_lines.values():
-        line_start, line_end = lines[0], lines[1]
+    for ball, ghost_lines in table.ghost_ball_lines.items():
+        # Draw traveling line
+        travel_line_start, travel_line_end = ball.pos, ghost_lines[0]
+
+        p1 = coords_to_pygame(travel_line_start, HEIGHT)
+        p2 = coords_to_pygame(travel_line_end, HEIGHT)
+
+        x1, y1 = int(p1.x), int(p1.y)
+        x2, y2 = int(p2.x), int(p2.y)
+        color = (255, 255, 255)
+
+        pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
 
 
-        p1 = coords_to_pygame(line_start, HEIGHT)
-        p2 = coords_to_pygame(line_end, HEIGHT)
+        p = coords_to_pygame(travel_line_end, HEIGHT)
+        x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
+        color = table.cue_ball.ball_type.color
+        pygame.gfxdraw.aacircle(screen, x, y, r, color)
+
+        # Draw ghost line
+        ghost_line_start, ghost_line_end = ghost_lines[0], ghost_lines[1]
+
+        p1 = coords_to_pygame(ghost_line_start, HEIGHT)
+        p2 = coords_to_pygame(ghost_line_end, HEIGHT)
 
         x1, y1 = int(p1.x), int(p1.y)
         x2, y2 = int(p2.x), int(p2.y)
@@ -144,8 +162,7 @@ def draw_object_ball_deflection_line(screen, table: PoolTable):
         pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
 
         # # DRAW GHOST BALL
-        p = coords_to_pygame(line_end, HEIGHT)
-
+        p = coords_to_pygame(ghost_line_end, HEIGHT)
         x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
         color = table.cue_ball.ball_type.color
         pygame.gfxdraw.aacircle(screen, x, y, r, color)

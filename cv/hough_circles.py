@@ -2,13 +2,17 @@
 import numpy as np
 import argparse
 import cv2
+import sys
 from datetime import datetime
 
-from cv.average_queue import AverageQueue
+# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
+# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
+#
+# from cv.average_queue import AverageQueue
 
 DP = 1.1
 MIN_DIST = 20
-USING_CAMERA = False
+USING_CAMERA = True
 RESIZE_FRAME_WIDTH = 800
 HIGH_THRESHOLD = 50
 LOW_THRESHOLD = 25
@@ -73,7 +77,7 @@ def run_hough_circles(image):
 
 def main():
   if USING_CAMERA:
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
   while True:
     if USING_CAMERA:

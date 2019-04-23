@@ -120,7 +120,8 @@ class PoolTable:
             return BallType.EIGHT
         # TODO: nine-ball
         else:
-            raise Exception('unknown cv ball color -- find Tina and throw saas at her')
+            return BallType.EIGHT
+            # raise Exception('unknown cv ball color -- find Tina and throw saas at her')
 
     def place_cv_balls(self, cv_balls: List[CVBall]):
         """

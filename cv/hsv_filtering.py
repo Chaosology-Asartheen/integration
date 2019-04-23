@@ -55,9 +55,9 @@ def find_ball(ball, hsv, frame, cv_balls):
         wait_escape()
 
     # find contours in the mask
-    circles = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
-    circles = imutils.grab_contours(circles)
+    contours = imutils.grab_contours(cnts)
     center = None
 
     min_contour_area = table_pixel_width * ball.min_contour
@@ -69,39 +69,38 @@ def find_ball(ball, hsv, frame, cv_balls):
     min_yellow_contour_area = table_pixel_width * .4
 
     # only proceed if at least one contour was found
-    if len(circles) > 0:
-        for c in circles:
-            # Find min enclosing circle around the contour
-            ((x, y), radius) = cv2.minEnclosingCircle(c)
-            # Compute normalized coordinates [0,1] for ball position
-            (norm_x, norm_y) = norm_coordinates(x, y, 0, table_pixel_length, 0, table_pixel_width)
-            # Compute table/irl coordinates for ball position
-            (table_x, table_y) = norm_x * constants.TABLE_LENGTH, norm_y * constants.TABLE_WIDTH
+    for c in contours:
+        # Find min enclosing circle around the contour
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+        # Compute normalized coordinates [0,1] for ball position
+        (norm_x, norm_y) = norm_coordinates(x, y, 0, table_pixel_length, 0, table_pixel_width)
+        # Compute table/irl coordinates for ball position
+        (table_x, table_y) = norm_x * constants.TABLE_LENGTH, norm_y * constants.TABLE_WIDTH
 
-            # Check that table coordinates are within right bounds (ball is indeed on the table)
-            if (constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-constants.BALL_RADIUS and
-                constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-constants.BALL_RADIUS):
+        # Check that table coordinates are within right bounds (ball is indeed on the table)
+        if (constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-constants.BALL_RADIUS and
+            constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-constants.BALL_RADIUS):
 
-                # Ensure that contour area is correct for a ball
-                if (min_contour_area < cv2.contourArea(c) < max_contour_area):
+            # Ensure that contour area is correct for a ball
+            if (min_contour_area < cv2.contourArea(c) < max_contour_area):
 
-                    if (ball.str_rep != "white" or (2*constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-2*constants.BALL_RADIUS and
-                        2*constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-2*constants.BALL_RADIUS)):
+                if (ball.str_rep != "white" or (2*constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-2*constants.BALL_RADIUS and
+                    2*constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-2*constants.BALL_RADIUS)):
 
-                        cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep))
-                        if DISPLAY:
-                            # draw the circle and midpoint on the frame
-                            cv2.circle(frame, (int(x), int(y)), int(radius), ball.bgr, 2)
-                            cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
-                # Edge case for 9, yellow stripe ball
-                elif (ball.str_rep == "yellow" and min_yellow_contour_area < cv2.contourArea(c) < min_contour_area):
-                    print("yellow stripe")
-
-                    cv_balls.append(CVBall(norm_x, norm_y, "nine"))
+                    cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep))
                     if DISPLAY:
                         # draw the circle and midpoint on the frame
-                        cv2.circle(frame, (int(x), int(y)), int(radius), (0,153,153), 2)
+                        cv2.circle(frame, (int(x), int(y)), int(radius), ball.bgr, 2)
                         cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
+            # Edge case for 9, yellow stripe ball
+            elif (ball.str_rep == "yellow" and min_yellow_contour_area < cv2.contourArea(c) < min_contour_area):
+                print("yellow stripe")
+
+                cv_balls.append(CVBall(norm_x, norm_y, "nine"))
+                if DISPLAY:
+                    # draw the circle and midpoint on the frame
+                    cv2.circle(frame, (int(x), int(y)), int(radius), (0,153,153), 2)
+                    cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
 
 def find_balls(balls, hsv_img, frame):
     cv_balls = []
@@ -126,9 +125,12 @@ def find_cuestick(hsv, frame):
         cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
-        min_cuestick_area = table_pixel_width * 4
-        if (min_cuestick_area < cv2.contourArea(cnt)):
-
+        min_cuestick_area = table_pixel_width * 3
+        max_cuestick_area = table_pixel_width * 5
+        # if (cv2.contourArea(cnt) > table_pixel_width * 2):
+        #     print("under: " + str(cv2.contourArea(cnt)))
+        if (min_cuestick_area < cv2.contourArea(cnt) < max_cuestick_area):
+            print(cv2.contourArea(cnt))
             rows,cols = hsv.shape[:2]
             [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
             left_y = int((-x*vy/vx) + y)
@@ -138,10 +140,10 @@ def find_cuestick(hsv, frame):
             left_point = (int(0),int(left_y))
             right_point = (int(cols-1),int(right_y))
             if DISPLAY:
-                cv2.line(frame,(cols-1,right_y),(0,left_y),white,2)
-                cv2.circle(frame, mid_point, 2, red, 2)
-                cv2.circle(frame, left_point, 2, red, 2)
-                cv2.circle(frame, right_point, 2, red, 2)
+                cv2.line(frame,(cols-1,right_y),(0,left_y),(255,255,255),2)
+                cv2.circle(frame, mid_point, 2, (0,0,255), 2)
+                cv2.circle(frame, left_point, 2, (0,0,255), 2)
+                cv2.circle(frame, right_point, 2, (0,0,255), 2)
 
             norm_mid_point = norm_coordinates(mid_point[0], mid_point[1], 0, table_pixel_length, 0, table_pixel_width)
             norm_left_point = norm_coordinates(left_point[0], left_point[1], 0, table_pixel_length, 0, table_pixel_width)
@@ -162,7 +164,7 @@ def main():
     balls = init_ball_info(ball_list)
 
     if USING_CAMERA:
-        cap = cv2.VideoCapture(1)
+        cap = cv2.VideoCapture(0)
         # cap.set(cv2.CV_CAP_PROP_BRIGHTNESS, 50)
     running = True
     while running:
@@ -200,7 +202,7 @@ def main():
         cv_balls = find_balls(balls, hsv_img, frame)
 
         print(cv_balls)
-        # print("cuestick " + str(find_cuestick(hsv_img, frame)))
+        print("cuestick " + str(find_cuestick(hsv_img, frame)))
 
         # Pass parameters to pool
 

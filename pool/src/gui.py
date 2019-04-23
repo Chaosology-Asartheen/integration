@@ -75,36 +75,6 @@ def draw_pool_table(screen, table: PoolTable):
         pygame.draw.circle(screen, pocket_color, (x, y), r)
 
 
-def draw_cue_stick_line(screen, table: PoolTable):
-    # TODO
-
-    if table.cue_deflect_line_start is None:
-        return
-
-    p1 = coords_to_pygame(table.cue_ball.pos, HEIGHT)
-    p2 = coords_to_pygame(table.cue_deflect_line_start, HEIGHT)
-
-    x1, y1 = int(p1.x), int(p1.y)
-    x2, y2 = int(p2.x), int(p2.y)
-    color = (255, 255, 255)
-
-    pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
-
-    # DRAW GHOST BALL
-    p = coords_to_pygame(table.cue_deflect_line_start, HEIGHT)
-
-    x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
-    color = table.cue_ball.ball_type.color
-
-    # Draw a circle
-    pygame.gfxdraw.aacircle(screen, x, y, r, color)
-
-
-def draw_cue_ghost_ball(screen, table: PoolTable):
-    # TODO
-    return
-
-
 def draw_cue_ball_deflection_line(screen, table: PoolTable):
     if table.cue_deflect_line_end is None:
         return

@@ -60,7 +60,6 @@ class PoolTable:
         else:
             self.place_cv_balls(cv_cue_points)
 
-
         # Cue stick
         if cv_cue_points is None:
             self.cue_angle = 0
@@ -71,14 +70,7 @@ class PoolTable:
         self.cue_ball_force = Vector(0.0, 0.0)
 
         # Deflection lines
-        # self.object_deflect_line_start = None
-        # self.object_deflect_line_end = None
-        # Deflection lines for each specific object ball
         self.ghost_ball_lines = {}  # Dict from Ball -> (ghost-ball-start, ghost-ball-end)
-
-        # Cue deflect line start = cue line end (ghost ball location)
-        self.cue_deflect_line_start = None
-        self.cue_deflect_line_end = None
 
         # For drawing rail and pockets
         self.rail_width = 0
@@ -173,8 +165,6 @@ class PoolTable:
 
     def reset_cue_ball(self):
         self.cue_angle = 0.0
-        self.cue_deflect_line_start = None
-        self.cue_deflect_line_end = None
 
     @staticmethod
     def get_balls(game: GameType):
@@ -469,7 +459,6 @@ class PoolTable:
             return
 
         # Reset lines
-        self.cue_deflect_line_end = None
         self.ghost_ball_lines = {}
 
         # First, strike the cue ball
@@ -484,6 +473,12 @@ class PoolTable:
             assert collided_ball_force is not None, "collided_ball is not None, but collided_ball_force is None!"
             ghost_start, ghost_end, collided_ball_2, collided_ball_force_2 = self.ball_hit(collided_ball_force, collided_ball)
             self.ghost_ball_lines[collided_ball] = (ghost_start, ghost_end)
+
+            # # Iteration 2: First collided ball
+            # if collided_ball_2 is not None:
+            #     assert collided_ball_force_2 is not None, "collided_ball_2 is not None, but collided_ball_force_2 is None!"
+            #     ghost_start, ghost_end, collided_ball_3, collided_ball_force_3 = self.ball_hit(collided_ball_force_2, collided_ball_2)
+            #     self.ghost_ball_lines[collided_ball_2] = (ghost_start, ghost_end)
 
         return
 

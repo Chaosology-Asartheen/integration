@@ -485,6 +485,12 @@ class PoolTable:
             ghost_start, ghost_end, collided_ball_2, collided_ball_force_2 = self.ball_hit(collided_ball_force, collided_ball)
             self.ghost_ball_lines[collided_ball] = (ghost_start, ghost_end)
 
+            # # Iteration 2: First collided ball
+            # if collided_ball_2 is not None:
+            #     assert collided_ball_force_2 is not None, "collided_ball_2 is not None, but collided_ball_force_2 is None!"
+            #     ghost_start, ghost_end, collided_ball_3, collided_ball_force_3 = self.ball_hit(collided_ball_force_2, collided_ball_2)
+            #     self.ghost_ball_lines[collided_ball_2] = (ghost_start, ghost_end)
+
         return
 
     def time_step(self):

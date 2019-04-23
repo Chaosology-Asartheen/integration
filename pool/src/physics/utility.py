@@ -162,6 +162,8 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
     :return: end point of the line
     """
 
+    # assert angle > 0, "provided angle is 0!"
+
     # Angle to degrees
     angle_rad = np.radians(angle)
 

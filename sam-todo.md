@@ -1,6 +1,7 @@
 TODO:
 - ball path collision, depth 2
 - show cue stick line
+- Cue stick speed
 - Fix python path to be portable
 - Pockets as just openings (not holes)
 

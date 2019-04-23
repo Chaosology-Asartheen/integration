@@ -158,9 +158,11 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
     :param angle: angle of line, north of x-axis, in degrees
     :param nw: upper-left border of the box
     :param se: lower-right border of the box
-    :param radius: radius of ball
+    :param offset: offset; usually radius of ball
     :return: end point of the line
     """
+
+    # assert angle > 0, "provided angle is 0!"
 
     # Angle to degrees
     angle_rad = np.radians(angle)
@@ -179,23 +181,47 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
         # Top quadrant
         y = n - p1.y - offset
         x = y / np.tan(angle_rad)
+
+        # assert x > 0.0, "x is 0!"
+        # assert y > 0.0, "y is 0!"
     elif 180 - left_start <= angle < 180 + bottom_start:
         # Left quadrant
         x = p1.x - w - offset
         y = x * np.tan(angle_rad)
+
+        # assert x > 0.0, "x is 0!"
+        # assert y > 0.0, "y is 0!"
     elif 180 + bottom_start <= angle < 360 - right_start:
         # Bottom quadrant
         y = p1.y - s - offset
         x = y / np.tan(angle_rad)
+
+        # assert x > 0.0, "x is 0!"
+        # assert y > 0.0, "y is 0!"
     else:
         # Right quadrant
         x = e - p1.x - offset
         y = x * np.tan(angle_rad)
 
+        # assert x > 0.0, "x is 0!"
+        # assert y > 0.0, "y is 0!"
+
+    if x == 0.0:
+        x = p1.x
+    if y == 0.0:
+        y = p1.y
+
     line_length = np.sqrt(x ** 2 + y ** 2)
 
-    return Coordinates(p1.x + line_length * np.cos(angle_rad),
+    # print("line_length = {}".format(line_length))
+
+
+    result = Coordinates(p1.x + line_length * np.cos(angle_rad),
                        p1.y + line_length * np.sin(angle_rad))
+
+    # print("get_line_endpoint_within_box(p1={}, angle={}, offset={} ...) returning {}".format(p1, angle, offset, result))
+
+    return result
 
 
 def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) -> (Coordinates, Coordinates):
@@ -236,6 +262,9 @@ def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) 
 
 
 def get_point_on_line_distance_from_point(line_start, line_end, point, distance) -> Coordinates:
+    print('get_point_on_line_distance_from_point called with: line_start={}, line_end={}, point={}, distance={}'.format(
+        line_start, line_end, point, distance
+    ))
     a_side = distance
     c_side = get_distance(line_start, point)
 

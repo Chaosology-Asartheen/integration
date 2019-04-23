@@ -1,8 +1,11 @@
+"""ball_initializer initializes ball constants for each ball for use with hsv_filtering.
+"""
+
 from ball_info import BallInfo
 import numpy as np
 
 # HSV values for different color balls
-# Range is 180,255,255
+# Range is H [0,180], S [0,255], V [0,255]
 LOWER_YELLOW = np.array([25,75,200]) #1
 UPPER_YELLOW = np.array([35,180,255])
 YELLOW_MIN_CONTOUR = .75
@@ -40,6 +43,10 @@ LOWER_BLACK = np.array([0,0,0])
 UPPER_BLACK = np.array([70,70,70])
 BLACK_MIN_CONTOUR = .7
 
+"""init_all_balls initalizes and stores BallInfo objects with their respective constants.
+Returns:
+    ball_dict: ball string representation to its respective BallInfo object
+"""
 def init_all_balls():
   white_ball = BallInfo(LOWER_WHITE, UPPER_WHITE, WHITE, 'white', WHITE_MIN_CONTOUR)
   yellow_ball = BallInfo(LOWER_YELLOW, UPPER_YELLOW, YELLOW, 'yellow', YELLOW_MIN_CONTOUR)
@@ -62,6 +69,12 @@ def init_all_balls():
   ball_dict['black'] = black_ball
   return ball_dict
 
+"""init_balls returns specified BallInfo objects.
+Args:
+    ball_list: String[] with string representations of ball colors the user wants returned
+Retruns:
+    balls: BallInfo[] of all the balls listed in ball_list
+"""
 def init_balls(ball_list):
   balls = []
   all_ball_info = init_all_balls()

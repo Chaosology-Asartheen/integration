@@ -100,68 +100,6 @@ def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coord
 def check_point_on_line_segment(x, y, p1, p2):
     return p1.x <= x <= p2.x and p1.y <= y <= p2.y
 
-
-# TODO: Delete this nephew
-def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
-    # print('-------')
-    # print('get_ray_circle_intersection')
-    # print('p1:{}, p2:{}'.format(p1, p2))
-    # print('c_mid:{}, c_radius:{}'.format(c_mid, c_radius))
-    # print('-------')
-    if (p2.x - p1.x) == 0:
-        print('p2.x = ', p2.x)
-        print('p1.x = ', p1.x)
-        exit(-1)
-    # Line equation: y = mx + b
-    m = (p2.y - p1.y) / (p2.x - p1.x)
-    b = p1.y - m * p1.x
-
-    # Circle equation: (x-p)^2 + (y-q)^2 = r^2
-    p, q, r = c_mid.x, c_mid.y, c_radius
-
-    # First, substituting line equation into circle equation
-    # These are the coefficients of the quadratic equation created
-    A = (m ** 2 + 1)
-    B = 2 * (m * b - m * q - p)
-    C = (q ** 2 - r ** 2 + p ** 2 - 2 * b * q + b ** 2)
-
-    discrim = B ** 2 - 4 * A * C
-
-    if discrim < 0:
-        print('line misses circle')
-        # Line misses circle
-        return None
-    elif discrim == 0:
-        print('line is tangent to circle')
-        # Line tangent to circle
-        x1 = (-B + np.sqrt(discrim)) / 2 * A
-        y1 = m * x1 + b
-        x2 = (-B - np.sqrt(discrim)) / 2 * A
-        y2 = m * x2 + b
-
-        assert (x1 == x2 and y1 == y2)
-        return Coordinates(x1, y1)
-
-    else:  # discrim > 0
-        print('line intersects circle')
-        # Line meets circle at 2 points
-        x1 = (-B + np.sqrt(discrim)) / 2 * A
-        result1 = Coordinates(x1, m * x1 + b)
-        x2 = (-B - np.sqrt(discrim)) / 2 * A
-        result2 = Coordinates(x2, m * x2 + b)
-
-        mag1 = get_distance(p1, result1)
-        mag2 = get_distance(p1, result2)
-
-        if not check_point_on_line_segment(result1.x, result1.y, p1, p2):
-            return None
-
-        if mag1 < mag2:
-            return result1
-        else:
-            return result2
-
-
 def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
                                 p3: Coordinates, p4: Coordinates) -> Optional[Coordinates]:
     """
@@ -220,9 +158,11 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
     :param angle: angle of line, north of x-axis, in degrees
     :param nw: upper-left border of the box
     :param se: lower-right border of the box
-    :param radius: radius of ball
+    :param offset: offset; usually radius of ball
     :return: end point of the line
     """
+
+    # assert angle > 0, "provided angle is 0!"
 
     # Angle to degrees
     angle_rad = np.radians(angle)
@@ -241,14 +181,17 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
         # Top quadrant
         y = n - p1.y - offset
         x = y / np.tan(angle_rad)
+
     elif 180 - left_start <= angle < 180 + bottom_start:
         # Left quadrant
         x = p1.x - w - offset
         y = x * np.tan(angle_rad)
+
     elif 180 + bottom_start <= angle < 360 - right_start:
         # Bottom quadrant
         y = p1.y - s - offset
         x = y / np.tan(angle_rad)
+
     else:
         # Right quadrant
         x = e - p1.x - offset
@@ -256,8 +199,9 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
 
     line_length = np.sqrt(x ** 2 + y ** 2)
 
-    return Coordinates(p1.x + line_length * np.cos(angle_rad),
-                       p1.y + line_length * np.sin(angle_rad))
+    result = Coordinates(p1.x + line_length * np.cos(angle_rad), p1.y + line_length * np.sin(angle_rad))
+
+    return result
 
 
 def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) -> (Coordinates, Coordinates):
@@ -298,6 +242,9 @@ def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) 
 
 
 def get_point_on_line_distance_from_point(line_start, line_end, point, distance) -> Coordinates:
+    print('get_point_on_line_distance_from_point called with: line_start={}, line_end={}, point={}, distance={}'.format(
+        line_start, line_end, point, distance
+    ))
     a_side = distance
     c_side = get_distance(line_start, point)
 

@@ -108,6 +108,7 @@ def solve(a=None, b=None, c=None, A=None, B=None, C=None, ssa_flag='forbid'):
         raise ValueError('Must provide exactly 3 inputs')
     if sum(x is None for x in (a, b, c)) == 3:
         raise ValueError('Must provide at least 1 side length')
+    print('a: {}, b: {}, c: {}, A: {}, B: {}, C: {}'.format(a, b, c, A, B, C))
     assert all(x > 0 for x in (a, b, c, A, B, C) if x is not None)
     assert all(x < pi for x in (A, B, C) if x is not None)
     assert ssa_flag in ('forbid', 'acute', 'obtuse')

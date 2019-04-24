@@ -35,6 +35,21 @@ def coords_from_pygame(xy: (float, float), height: float) -> Coordinates:
 
     return Coordinates(xy[0], height - xy[1])
 
+def draw_line(screen, p1, p2, color):
+    p1, p2 = coords_to_pygame(p1, HEIGHT), coords_to_pygame(p2, HEIGHT)
+    x1, y1 = int(p1.x), int(p1.y)
+    x2, y2 = int(p2.x), int(p2.y)
+    pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
+
+def draw_circle(screen, center, radius, color, filled=False):
+    p = coords_to_pygame(center, HEIGHT)
+    x, y, r = int(p.x), int(p.y), int(radius)
+    pygame.gfxdraw.aacircle(screen, x, y, r, color)
+
+    if filled:
+        pygame.gfxdraw.filled_circle(screen, x, y, r, color)
+
+
 """
 PyGame functions.
 """
@@ -67,23 +82,15 @@ def draw_pool_table(screen, table: PoolTable):
     pygame.draw.rect(screen, table_color, pygame.Rect(left, top, width, height), 0)
 
     # Draw table pockets
+    pocket_color = (0, 0, 0)
     for hole_center in table.hole_centers:
-        pocket_color = (0, 0, 0)
-        p = coords_to_pygame(hole_center, HEIGHT)
-        x, y, r = int(p.x), int(p.y), int(table.hole_radius)
-        pygame.draw.circle(screen, pocket_color, (x, y), r)
+        draw_circle(screen, hole_center, table.hole_radius, pocket_color, filled=True)
 
 def draw_cue_stick(screen, table: PoolTable):
     if table.cue_front_point is None or table.cue_back_point is None:
         return
-
-    x1, y1 = int(table.cue_front_point.x), int(table.cue_front_point.y)
-    x2, y2 = int(table.cue_back_point.x), int(table.cue_back_point.y)
-    print("DRAWING CUE STICK AT POINTS: {},{} and {},{}".format(x1, y1, x2, y2))
-    color = (165, 42, 42)
-
-    pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
-
+    brown_rgb = (165, 42, 42)
+    draw_line(screen, table.cue_front_point, table.cue_back_point, brown_rgb)
 
 def draw_ball_lines(screen, table: PoolTable):
     if table.ghost_ball_lines is {}:
@@ -92,50 +99,21 @@ def draw_ball_lines(screen, table: PoolTable):
     for ball, ghost_lines in table.ghost_ball_lines.items():
         # Draw traveling line
         travel_line_start, travel_line_end = ball.pos, ghost_lines[0]
+        draw_line(screen, travel_line_start, travel_line_end, ball.ball_type.color)
 
-        p1 = coords_to_pygame(travel_line_start, HEIGHT)
-        p2 = coords_to_pygame(travel_line_end, HEIGHT)
-
-        x1, y1 = int(p1.x), int(p1.y)
-        x2, y2 = int(p2.x), int(p2.y)
-        color = (255, 255, 255)
-
-        pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
-
-
-        p = coords_to_pygame(travel_line_end, HEIGHT)
-        x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
-        color = table.cue_ball.ball_type.color
-        pygame.gfxdraw.aacircle(screen, x, y, r, color)
+        # Draw ghost ball start
+        draw_circle(screen, travel_line_end, ball.radius, ball.ball_type.color)
 
         # Draw ghost line
         ghost_line_start, ghost_line_end = ghost_lines[0], ghost_lines[1]
+        draw_line(screen, ghost_line_start, ghost_line_end, ball.ball_type.color)
 
-        p1 = coords_to_pygame(ghost_line_start, HEIGHT)
-        p2 = coords_to_pygame(ghost_line_end, HEIGHT)
-
-        x1, y1 = int(p1.x), int(p1.y)
-        x2, y2 = int(p2.x), int(p2.y)
-        color = (255, 255, 255)
-
-        pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
-
-        # # DRAW GHOST BALL
-        p = coords_to_pygame(ghost_line_end, HEIGHT)
-        x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
-        color = table.cue_ball.ball_type.color
-        pygame.gfxdraw.aacircle(screen, x, y, r, color)
-
+        # Draw ghost ball end
+        draw_circle(screen, ghost_line_end, ball.radius, ball.ball_type.color)
 
 def draw_pool_ball(screen, ball: PoolBall):
-    p = coords_to_pygame(ball.pos, HEIGHT)
-
-    x, y, r = int(p.x), int(p.y), int(ball.radius)
-    color = ball.ball_type.color
-
     # Draw a circle
-    pygame.gfxdraw.aacircle(screen, x, y, r, color)
-    pygame.gfxdraw.filled_circle(screen, x, y, r, color)
+    draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=True)
 
 
 def gui_update(screen, table):

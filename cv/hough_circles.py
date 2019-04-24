@@ -5,91 +5,106 @@ import cv2
 import sys
 from datetime import datetime
 
-# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
-# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
-#
-# from cv.average_queue import AverageQueue
+import time
+import sys
+sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
+sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
+from cv.modules.average_queue import AverageQueue
+from cv.modules.color_classification import ColorClassification
+import cv.constants as constants
 
-DP = 1.1
-MIN_DIST = 20
-USING_CAMERA = True
-RESIZE_FRAME_WIDTH = 800
-HIGH_THRESHOLD = 50
-LOW_THRESHOLD = 25
-MIN_RADIUS = 7
-MAX_RADIUS = 20
+def run_hough_circles(image, aggres, cc, display=False):
+    output = image.copy()
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-WHITE = (255,255,255)
-BLACK = ()
-COLORS = [(WHITE,"white")]
+    # detect circles in the image
+    circles = cv2.HoughCircles(image=gray, method=cv2.HOUGH_GRADIENT, dp=constants.DP,
+        minDist=constants.MIN_DIST, param1=constants.HIGH_THRESHOLD,
+        param2=constants.LOW_THRESHOLD, minRadius=constants.MIN_RADIUS,
+        maxRadius=constants.MAX_RADIUS)
 
-def color_almost_equals(expected, actual, epsilon):
-  return (abs(expected[0] - actual[0] <= epsilon) and
-          abs(expected[1] - actual[1] <= epsilon) and
-          abs(expected[2] - actual[2] <= epsilon))
+    # ensure at least some circles were found
+    if (circles is None) or (len(circles) <= 0):
+        print("Can't find any circles")
+        return
 
-def determine_color(image, xy):
-  STEP = 3
-  COLOR_EPSILON = 15
-  VOTE_THRESHOLD = 4
-  x, y = int(xy[0]), int(xy[1])
-  for expected_color,color_str in COLORS:
-    vote = 0
-    for row in range(y-STEP,y+STEP,STEP):
-      for col in range(x-STEP,x+STEP,STEP):
-        actual_color = image[row][col]
-        if color_almost_equals(expected_color, actual_color, COLOR_EPSILON):
-          vote += 1
-    if vote >= VOTE_THRESHOLD:
-      return (expected_color,color_str)
-  return ((0,0,0),"black")
-
-def run_hough_circles(image):
-  output = image.copy()
-  gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-  # detect circles in the image
-  circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, DP, MIN_DIST, param1=HIGH_THRESHOLD,
-    param2=LOW_THRESHOLD, minRadius=MIN_RADIUS, maxRadius=MAX_RADIUS)
-
-  # ensure at least some circles were found
-  if circles is not None:
-    print("Found circles")
     # convert the (x, y) coordinates and radius of the circles to integers
     circles = np.round(circles[0, :]).astype("int")
 
+    circles = list(circles)
+
+    def in_range(coord):
+        x, y = coord[0], coord[1]
+        for ((ux, uy), (lx, ly)) in constants.ignore_regions:
+            if (ux <= x <= lx) or (uy <= y <= ly):
+                return False
+        return True
+
+    circles = list(filter(lambda x: in_range(x), circles))
+
+    colors = []
+
+    # debug print of all circles found
+    #print(np.sort(circles, axis=0))
+
     # loop over the (x, y) coordinates and radius of the circles
     for (x, y, r) in circles:
-      # TODO: filter out x/y's that lie outside table edges or on pockets. Requires getting table coords
-      color_val,color_str = determine_color(image, (x,y))
-      print(color_str)
-      # draw the circle in the output image, then draw a rectangle
-      # corresponding to the center of the circle
-      # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
-      cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2), (20,255,57), -1)
-      cv2.rectangle(output, (x - 1, y - 1), (x + 1, y + 1), color_val, -1)
+        # TODO: filter out x/y's that lie outside table edges or on pockets. Requires getting table coords
+        color_str = cc.determine_color(image, x, y)
+        colors.append(color_str)
 
-    # show the output image
-    cv2.imshow("output", output)
-    cv2.waitKey(0)
-  else:
-    print("No circles :(")
+        if not (color_str) in aggres:
+            aggres[color_str] = AverageQueue(limit=5)
 
-def main():
-  if USING_CAMERA:
-    cap = cv2.VideoCapture(0)
+        aggres[color_str].add(x, y)
 
-  while True:
-    if USING_CAMERA:
-      ret, frame = cap.read()
-    else:
-      frame = cv2.imread("/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/test_imgs/2.jpg")
-    frame_height = frame.shape[0]
-    frame_width = frame.shape[1]
-    resize_frame_height = int(frame_height / frame_width * RESIZE_FRAME_WIDTH)
-    frame = cv2.resize(frame, (RESIZE_FRAME_WIDTH, resize_frame_height))
-    cv_balls = run_hough_circles(frame)
+        if True: # change me to stop using this average queue
+            ave_x, ave_y = aggres[color_str].get_average()
+            ave_x = int(ave_x)
+            ave_y = int(ave_y)
 
+            # draw the circle in the output image, then draw a rectangle
+            # corresponding to the center of the circle
+            # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+            cv2.rectangle(output, (ave_x - 2, ave_y - 2), (ave_x + 2, ave_y + 2), (20,255,57), -1)
+            # cv2.rectangle(output, (x - 1, y - 1), (x + 1, y + 1), color_val, -1)
+        else:
+            print("Can't find a bucket for this", x, y, color_str)
+            cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2), (255, 20, 57), -1)
+
+    for ((x, y), (w, z)) in constants.ignore_regions:
+        cv2.rectangle(output, (x, y), (w, z), (255, 255, 255), 1)
+
+    result = {}
+    for k, v in aggres.items():
+        result[k] = v.get_average()
+
+    # show the output image, if prompted to by display flag
+    if display:
+        print(circles, colors)
+        cv2.imshow("output", output)
+        res = cv2.waitKey(0)
+
+    print(result)
+    return result
+
+def main(display):
+    cap = cv2.VideoCapture(1)
+
+    aggres = {}
+    cc = ColorClassification(epsilon=constants.RGB_EPSILON, threshold=4)
+    # identification colors
+    cc.fill_color_ranges(d=constants.RGB_TARGETS)
+    # display colors
+    cc.fill_rgb_lookup(d=constants.DISPLAY_COLORS)
+
+    while True:
+        ret, frame = cap.read()
+        frame_height = frame.shape[0]
+        frame_width = frame.shape[1]
+        resize_frame_height = int(frame_height / frame_width * constants.RESIZE_FRAME_WIDTH)
+        frame = cv2.resize(frame, (constants.RESIZE_FRAME_WIDTH, resize_frame_height))
+        cv_balls = run_hough_circles(frame, aggres, cc, display=display)
 
 if __name__ == "__main__":
-    main()
+    main(display=True)

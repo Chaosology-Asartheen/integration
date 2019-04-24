@@ -57,7 +57,7 @@ def find_cuestick(frame):
         cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
-        min_cuestick_area = table_pixel_width * 1.5
+        min_cuestick_area = table_pixel_width * 2
         max_cuestick_area = table_pixel_width * 10
         contour_area = cv2.contourArea(cnt)
         if DEBUG and contour_area > table_pixel_width * 1.5:
@@ -185,7 +185,9 @@ if __name__ == "__main__":
             continue
         frame = hsv_filtering.getResizedFrame(frame)
         cuestick_res = find_cuestick(frame)
+        norm_mid_point, norm_left_point, norm_right_point = cuestick_res
         cuestick_tip_res = find_cuestick_tip(frame)
+        cue_tip_x, cue_tip_y = cuestick_tip_res
         #
         # if cuestick_tip_res and cuestick_past_pos:
         #     speed = compute_cuestick_speed(cuestick_tip_res, cuestick_past_pos)

@@ -27,7 +27,7 @@ from pool.src.pool.pool_ball import PoolBall
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
 print(sys.path)
-from cv.test import CVBall
+from cv.cv_ball import CVBall
 
 LONG_DIAMONDS = 8
 SHORT_DIAMONDS = 4

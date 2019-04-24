@@ -150,7 +150,7 @@ def find_cuestick(hsv, frame):
             norm_right_point = norm_coordinates(right_point[0], right_point[1], 0, table_pixel_length, 0, table_pixel_width)
             return [norm_mid_point, norm_left_point, norm_right_point]
 
-def getResizedFrame(frame):
+def get_resized_frame(frame):
     frame_height = frame.shape[0]
     frame_width = frame.shape[1]
     resize_frame_height = int(frame_height / frame_width * constants.RESIZE_FRAME_WIDTH)

@@ -11,13 +11,13 @@ from pool.src.pool.ball_type import BallType
 from pool.src.pool.pool_ball import PoolBall
 from pool.src.pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1700, 1700
-TABLE_LENGTH = 1700
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1200, 1200
+TABLE_LENGTH = 1200
 TABLE_WIDTH = TABLE_LENGTH / 2.1352313167
 TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
 
 BACKGROUND_COLOR = (0, 0, 0)
-TABLE_COLOR = (0, 0, 0)
+TABLE_COLOR = (1, 68, 33)
 CUE_STICK_LINE_COLOR = (255, 255, 255)
 POCKET_COLOR = (255, 0, 0)
 """
@@ -111,7 +111,6 @@ def draw_ball_lines(screen, table: PoolTable):
         return
 
     for ball, ghost_lines in table.ghost_ball_lines.items():
-        print('ghost_ball_lines: ball={}, ghost_lines={}'.format(ball, ghost_lines))
         # Draw traveling line
         travel_line_start, travel_line_end = ball.pos, ghost_lines[0]
         draw_line(screen, travel_line_start, travel_line_end, ball.ball_type.color)

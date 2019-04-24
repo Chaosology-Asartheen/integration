@@ -7,7 +7,8 @@ from pool.src.physics.collisions import check_ball_wall_collision, resolve_ball_
     check_ball_ball_collision, resolve_ball_ball_collision
 from pool.src.physics.coordinates import Coordinates
 from pool.src.physics.utility import get_angle, get_distance, get_line_endpoint_within_box, get_parallel_line, \
-    check_ray_circle_intersection, get_point_on_line_distance_from_point
+    check_ray_circle_intersection, get_point_on_line_distance_from_point, solve_vf_or_d, get_distance_before_stop, \
+    get_vf_after_distance
 from pool.src.physics.vector import Vector
 from pool.src.pool.ball_type import BallType
 from pool.src.pool.game_type import GameType
@@ -35,6 +36,14 @@ RACK_START_DIAMOND = 6
 # TODO: Get these from a config file
 BALL_MASS = 5
 BALL_RADIUS = 20
+
+# Physics properties
+# For now, taken from: https://billiards.colostate.edu/faq/physics/physical-properties/
+BALL_TABLE_FRICTION_COEFFICIENT = 0.2
+BALL_BALL_FRICTION_RESTITUTION = 0.95
+BALL_WALL_FRICTION_RESTITUTION = 0.75
+
+BALL_TABLE_ACC = -0.0005
 
 
 class PoolTable:
@@ -69,8 +78,8 @@ class PoolTable:
         self.cue_stick_intersecting = False
         self.cue_stick_line_end = None
 
-        # Cue ball force
-        self.cue_ball_force = Vector(0.0, 0.0)
+        # Cue ball starting velocity
+        self.cue_ball_vel = Vector(0.0, 0.0)
 
         # Deflection lines
         self.ghost_ball_lines = {}  # Dict from Ball -> (ghost-ball-start, ghost-ball-end)
@@ -386,30 +395,56 @@ class PoolTable:
         # TODO: Refactor ball_hit angle stuff here... or just delete this
         return
 
-    def ball_hit(self, force: Vector, struck_ball: PoolBall) -> (Coordinates, Coordinates, PoolBall, Vector):
+    @staticmethod
+    def check_enough_speed(start: Coordinates, end: Coordinates, vel: Vector) -> (float, float):
+        """
+
+        :param start: position of ball
+        :param end: target position of ball
+        :param vel: velocity of ball
+        :return: 0 - distance if not enough velocity, None otherwise
+                 1 - final speed if enough velocity, None otherwise
+        """
+
+        dist_traveled = get_distance_before_stop(abs(vel.get_magnitude()), BALL_TABLE_ACC)
+        dist_required = get_distance(start, end)
+
+        if dist_traveled < dist_required:
+            return dist_traveled, None
+
+        # Final velocity of struck ball after collision
+        vf = get_vf_after_distance(abs(vel.get_magnitude()), BALL_TABLE_ACC, dist_required)
+        return None, vf
+
+    def ball_hit(self, v_start: Vector, struck_ball: PoolBall) -> (Coordinates, Coordinates, PoolBall, Vector):
         """
         Take in the starting position of a ball and the Force it will be struck with.
         Output is where the ghost ball will begin and end to be displayed.
         If there was another ball hit along the way, that ball will also be returned with the expectation
         that this function will be called for that ball again, for as many iterations desired.
 
-        :param force: force that struck_ball is struck with
+        :param v_start: velocity that struck_ball starts with
         :param struck_ball: PoolBall being struck
         :return: 0 - Ghost ball start
                  1 - Ghost ball end
                  2 - Collided pool ball if there was one, None otherwise
-                 3 - Collided pool ball force if there was one, None otherwise
+                 3 - Collided pool ball velocity if there was one, None otherwise
         """
 
+        assert all(param is not None for param in [v_start, struck_ball]), 'None param passed in'
+
+        if v_start is None or v_start.get_magnitude() == 0.0:
+            return
+
         # Return values
-        ghost_start, ghost_end, collided_ball, collided_force = None, None, None, None
+        ghost_start, ghost_end, collided_ball, collided_vel = None, None, None, None
 
         radius = struck_ball.radius
         nw = Coordinates(self.left, self.top)
         se = Coordinates(self.right, self.bottom)
 
         mid_start = struck_ball.pos
-        mid_end = ghost_start = get_line_endpoint_within_box(mid_start, force.get_angle(), nw, se, radius)
+        mid_end = ghost_start = get_line_endpoint_within_box(mid_start, v_start.get_angle(), nw, se, radius)
 
         # Iterate through pool balls, from closest to farthest
         for object_ball in self.get_balls_by_distance(mid_start):
@@ -417,6 +452,15 @@ class PoolTable:
 
             # Found a ball-ball collision
             if PoolTable.check_ball_intersects_ball(struck_ball, mid_end, object_ball):
+                # TODO: Check if enough there's velocity to make it to the ball
+                d, vf_mag = PoolTable.check_enough_speed(struck_ball.pos, object_ball.pos, v_start)
+                if d is not None: # Not enough speed
+                    print("STRUCK BALL DIDN'T MAKE IT TO OBJECT BALL...")
+                    ghost_start = ghost_end = Coordinates(
+                        struck_ball.pos.x + d * np.cos(np.radians(v_start.get_angle())),
+                        struck_ball.pos.y + d * np.sin(np.radians(v_start.get_angle())))
+                    return ghost_start, ghost_end, None, None
+
                 # Ghost line start
                 ghost_start = get_point_on_line_distance_from_point(mid_start,
                                                                     mid_end,
@@ -428,7 +472,8 @@ class PoolTable:
 
                 # Need to calculate object ball angle to get struck ball deflection angle
                 object_ball_angle = get_angle(object_ball.pos, ghost_start)
-                object_ball_ghost_end = get_line_endpoint_within_box(object_ball.pos, object_ball_angle, nw, se, object_ball.radius)
+                object_ball_ghost_end = get_line_endpoint_within_box(object_ball.pos, object_ball_angle, nw, se,
+                                                                     object_ball.radius)
 
                 # 90 degrees will be added or subtracted to this to get the final result
                 struck_deflect_angle = get_angle(object_ball_ghost_end, object_ball.pos)
@@ -436,35 +481,60 @@ class PoolTable:
                 # Used to see if struck ball is hit to the left or right of object ball
                 struck_object_angle = get_angle(object_ball.pos, self.cue_ball.pos)
 
-                if self.cue_angle % 360 == 0: # Edge case when perfectly to the right
+                if self.cue_angle % 360 == 0:  # Edge case when perfectly to the right
                     struck_deflect_angle = (struck_deflect_angle + 90) % 360
-                elif self.cue_angle < struck_object_angle: # Struck ball to the RIGHT of object ball
+                elif self.cue_angle < struck_object_angle:  # Struck ball to the RIGHT of object ball
                     struck_deflect_angle = (struck_deflect_angle - 90) % 360
-                else: # Struck ball to the LEFT of object ball
+                else:  # Struck ball to the LEFT of object ball
                     struck_deflect_angle = (struck_deflect_angle + 90) % 360
-
 
                 # Update return values and return
-                ghost_end = get_line_endpoint_within_box(ghost_start, struck_deflect_angle, nw, se, struck_ball.radius)
-                collided_force = Vector(np.cos(np.radians(object_ball_angle)), np.sin(np.radians(object_ball_angle)))
+                ghost_cushion = get_line_endpoint_within_box(ghost_start, struck_deflect_angle, nw, se, struck_ball.radius)
+
+                # Check if deflected struck ball will reach the cushion
+                vf = Vector(vf_mag * np.cos(np.radians(struck_deflect_angle)),
+                            vf_mag * np.sin(np.radians(struck_deflect_angle)))
+
+                d, vf_mag = PoolTable.check_enough_speed(ghost_start, ghost_cushion, vf)
+                if d is not None: # Didn't make it to the cushion
+                    print("STRUCK BALL DEFLECTED OFF ANOTHER BALL DIDN'T MAKE IT TO CUSHION...")
+                    ghost_end = Coordinates(
+                        ghost_start.x + d * np.cos(np.radians(struck_deflect_angle)),
+                        ghost_start.y + d * np.sin(np.radians(struck_deflect_angle))
+                    )
+                    collided_vel = Vector(v_start.x/2, v_start.y/2) # FIXME: What to return here?
+                else:
+                    ghost_end = ghost_cushion
+                    collided_vel = Vector(vf_mag * np.cos(np.radians(object_ball_angle)),
+                                          vf_mag * np.sin(np.radians(object_ball_angle)))
 
                 assert ghost_start is not None
                 assert ghost_end is not None
                 assert object_ball is not None
                 assert object_ball_angle is not None
 
-                return ghost_start, ghost_end, object_ball, collided_force
+                return ghost_start, ghost_end, object_ball, collided_vel
 
         # No ball collisions, wall collision
 
         # FIXME: HACKY - Create a pseudo-pool ball (where the ball would end up on the cushion)
         struck_ball_on_cushion = PoolBall(None, Coordinates(ghost_start.x, ghost_start.y),
-                                  0.0, struck_ball.radius,
-                                  vel=Vector(ghost_start.x - struck_ball.pos.x,
-                                             ghost_start.y - struck_ball.pos.y).unit())
+                                          0.0, struck_ball.radius,
+                                          vel=Vector(ghost_start.x - struck_ball.pos.x,
+                                                     ghost_start.y - struck_ball.pos.y).unit())
 
+        # Check if struck ball makes it to the cushion
+        d, vf_mag = PoolTable.check_enough_speed(struck_ball.pos, struck_ball_on_cushion.pos, v_start)
+        if d is not None:  # Not enough speed
+            print("STRUCK BALL DIDN'T MAKE IT TO CUSHION...")
+            ghost_start = ghost_end = Coordinates(
+                struck_ball.pos.x + d * np.cos(np.radians(v_start.get_angle())),
+                struck_ball.pos.y + d * np.sin(np.radians(v_start.get_angle())))
+            return ghost_start, ghost_end, None, None
 
-        ball_wall_collision = check_ball_wall_collision(struck_ball_on_cushion, self.top, self.left, self.bottom, self.right)
+        # Otherwise, struck ball makes it to the cushion
+        ball_wall_collision = check_ball_wall_collision(struck_ball_on_cushion, self.top, self.left, self.bottom,
+                                                        self.right)
         assert ball_wall_collision is not None, "there should be a ball-wall collision, bc there were no ball-ball collisions"
         resolve_ball_wall_collision(struck_ball_on_cushion, ball_wall_collision)
 
@@ -472,8 +542,21 @@ class PoolTable:
         deflection_angle = struck_ball_on_cushion.vel.get_angle()
         ghost_end = get_line_endpoint_within_box(ghost_start, deflection_angle, nw, se, self.cue_ball.radius)
 
-        return ghost_start, ghost_end, None, None
+        # Check if deflected struck ball will reach the cushion
+        vf = Vector(vf_mag * np.cos(np.radians(deflection_angle)),
+                    vf_mag * np.sin(np.radians(deflection_angle)))
+        d, vf_mag = PoolTable.check_enough_speed(ghost_start, ghost_end, vf)
 
+        if d is not None:  # Didn't make it to the cushion
+            print("STRUCK BALL DEFLECTED OFF CUSHION DIDN'T MAKE IT TO CUSHION...")
+            ghost_end = Coordinates(
+                ghost_start.x + d * np.cos(np.radians(deflection_angle)),
+                ghost_start.y + d * np.sin(np.radians(deflection_angle))
+            )
+            return ghost_start, ghost_end, None, None
+
+
+        return ghost_start, ghost_end, None, None
 
     def set_lines(self):
         """
@@ -494,22 +577,26 @@ class PoolTable:
         self.ghost_ball_lines = {}
 
         # First, strike the cue ball
-        self.cue_ball_force = Vector(np.cos(np.radians(self.cue_angle)), np.sin(np.radians(self.cue_angle)))
-        cue_ghost_start, cue_ghost_end, collided_ball, collided_ball_force = self.ball_hit(self.cue_ball_force, self.cue_ball)
+        self.cue_ball_vel = Vector(np.cos(np.radians(self.cue_angle)), np.sin(np.radians(self.cue_angle)))
+        cue_ghost_start, cue_ghost_end, collided_ball, collided_ball_vel = self.ball_hit(self.cue_ball_vel,
+                                                                                         self.cue_ball)
+        print('collided_ball: {}, collided_ball_vel: {}'.format(collided_ball, collided_ball_vel))
 
         # Update map for cue ball
         self.ghost_ball_lines[self.cue_ball] = (cue_ghost_start, cue_ghost_end)
 
         # Iteration 1: First collided ball
         if collided_ball is not None:
-            assert collided_ball_force is not None, "collided_ball is not None, but collided_ball_force is None!"
-            ghost_start, ghost_end, collided_ball_2, collided_ball_force_2 = self.ball_hit(collided_ball_force, collided_ball)
+            assert collided_ball_vel is not None, "collided_ball is not None, but collided_ball_vel is None!"
+            ghost_start, ghost_end, collided_ball_2, collided_ball_vel_2 = self.ball_hit(
+                collided_ball_vel,
+                collided_ball)
             self.ghost_ball_lines[collided_ball] = (ghost_start, ghost_end)
 
             # # Iteration 2: First collided ball
             # if collided_ball_2 is not None:
-            #     assert collided_ball_force_2 is not None, "collided_ball_2 is not None, but collided_ball_force_2 is None!"
-            #     ghost_start, ghost_end, collided_ball_3, collided_ball_force_3 = self.ball_hit(collided_ball_force_2, collided_ball_2)
+            #     assert collided_ball_vel_2 is not None, "collided_ball_2 is not None, but collided_ball_vel_2 is None!"
+            #     ghost_start, ghost_end, collided_ball_3, collided_ball_vel_3 = self.ball_hit(collided_ball_vel_2, collided_ball_2)
             #     self.ghost_ball_lines[collided_ball_2] = (ghost_start, ghost_end)
 
         return

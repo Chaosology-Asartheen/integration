@@ -100,6 +100,7 @@ def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coord
 def check_point_on_line_segment(x, y, p1, p2):
     return p1.x <= x <= p2.x and p1.y <= y <= p2.y
 
+
 def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
                                 p3: Coordinates, p4: Coordinates) -> Optional[Coordinates]:
     """
@@ -162,7 +163,7 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
     :return: end point of the line
     """
 
-    # assert angle > 0, "provided angle is 0!"
+    assert all(param is not None for param in [p1, angle, nw, se, offset]), 'None param passed in'
 
     # Angle to degrees
     angle_rad = np.radians(angle)
@@ -265,3 +266,37 @@ def get_point_on_line_distance_from_point(line_start, line_end, point, distance)
     y = line_start.y + b_side * np.sin(angle)
 
     return Coordinates(x, y)
+
+
+def solve_vf_or_d(a: float, vo: float, vf=None, d=None) -> (float, float, float, float):
+    """
+    Based on the kinematics equation: v_f = v_o^2 + 2*a*d
+
+    :param vo: initial velocity, required
+    :param a: acceleration, required
+    :param vf: final velocity
+    :param d: displacement
+    :return: a, v_o, v_f, d
+    """
+
+    assert not (vf is None and d is None), 'both vf and d cannot be None'
+
+    print('solve_vf_or_d IN: a={}, vo={}, vf={}, d={}'.format(a, vo, vf, d))
+
+    if vf is None:
+        vf = np.sqrt(vo ** 2 + 2 * a * d)
+    elif d is None:
+        d = (vf ** 2 - vo ** 2) / (2 * a)
+
+    print('solve_vf_or_d OUT: a={}, vo={}, vf={}, d={}'.format(a, vo, vf, d))
+
+    return a, vo, vf, d
+
+def get_distance_before_stop(vo: float, a: float):
+    vf = 0.0 # Coming to complete stop
+    d = (vf ** 2 - vo ** 2) / (2 * a)
+    return d
+
+def get_vf_after_distance(vo: float, a: float, d: float):
+    vf = np.sqrt(vo ** 2 + 2 * a * d)
+    return vf

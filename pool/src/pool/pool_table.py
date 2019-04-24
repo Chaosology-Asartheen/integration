@@ -34,7 +34,7 @@ RACK_START_DIAMOND = 6
 
 # TODO: Get these from a config file
 BALL_MASS = 5
-BALL_RADIUS = 10
+BALL_RADIUS = 20
 
 
 class PoolTable:
@@ -66,6 +66,8 @@ class PoolTable:
             self.cue_angle = 0
         else:
             self.set_cv_cue_stick(cv_cue_points)
+        self.cue_stick_intersecting = False
+        self.cue_stick_line_end = None
 
         # Cue ball force
         self.cue_ball_force = Vector(0.0, 0.0)
@@ -164,24 +166,34 @@ class PoolTable:
 
         # Check if cue stick line intersects the cue ball
         # def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
-        p1, p2 = self.convert_cv_coords(points[1][0], points[1][1]), self.convert_cv_coords(points[2][0], points[2][1])
-        if not check_ray_circle_intersection(p1, p2, self.cue_ball.pos, self.cue_ball.radius):
-            print("-----------------------------------------------------")
-            print("-----> CUE STICK NOT INTERSECTING THE CUE BALL <-----")
-            print("-----------------------------------------------------")
-            self.cue_angle = None
-            return
-        else:
-            print("#####################################################")
-            print("#####> CUE STICK NOT INTERSECTING THE CUE BALL <#####")
-            print("#####################################################")
+        p1, p2 = self.convert_cv_coords(points[0][0], points[0][1]), self.convert_cv_coords(points[1][0], points[1][1])
 
         # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
-        self.cue_front_point = Coordinates(points[1][0], 1.0 - points[1][1])
-        self.cue_back_point = Coordinates(points[0][0], 1.0 - points[0][1])
+        self.cue_front_point = p2
+        self.cue_back_point = p1
 
         # ¯\_(ツ)_/¯
         self.cue_angle = get_angle(self.cue_back_point, self.cue_front_point)
+
+        # if not check_ray_circle_intersection(p1, p2, self.cue_ball.pos, self.cue_ball.radius):
+        #     print("-----------------------------------------------------")
+        #     print("-----> CUE STICK NOT INTERSECTING THE CUE BALL <-----")
+        #     print("-----------------------------------------------------")
+        #     self.cue_stick_intersecting = False
+        #
+        #     nw = Coordinates(self.left, self.top)
+        #     se = Coordinates(self.right, self.bottom)
+        #     self.cue_stick_line_end = get_line_endpoint_within_box(p1, self.cue_angle, nw, se, 1.0)
+        #
+        # else:
+        #     print("#####################################################")
+        #     print("#####> CUE STICK IS INTERSECTING THE CUE BALL <#####")
+        #     print("#####################################################")
+        #     self.cue_stick_intersecting = True
+        #     self.cue_stick_line_end = None
+
+
+
 
     def reset_cue_ball(self):
         self.cue_angle = 0.0

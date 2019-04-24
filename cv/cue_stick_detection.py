@@ -18,8 +18,8 @@ DEBUG = False
 
 # TODO: Requires tuning
 # Min/max contour area for the cuestick tip
-MIN_TIP_AREA = 130
-MAX_TIP_AREA = 250
+MIN_TIP_AREA = 30
+MAX_TIP_AREA = 200
 
 # White cue stick rgb bounds
 CUE_LOWER = np.array([230,230,230]) #cue stick, using rgb as bounds
@@ -58,7 +58,7 @@ def find_cuestick(frame):
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
         min_cuestick_area = table_pixel_width * 2
-        max_cuestick_area = table_pixel_width * 10
+        max_cuestick_area = table_pixel_width * 15
         contour_area = cv2.contourArea(cnt)
         if DEBUG and contour_area > table_pixel_width * 1.5:
             print(str(contour_area) + " min: " + str(min_cuestick_area) + " max: " + str(max_cuestick_area))
@@ -183,11 +183,12 @@ if __name__ == "__main__":
             if DEBUG:
                 print("no frame")
             continue
-        frame = hsv_filtering.getResizedFrame(frame)
+        frame = hsv_filtering.get_resized_frame(frame)
         cuestick_res = find_cuestick(frame)
-        norm_mid_point, norm_left_point, norm_right_point = cuestick_res
+        # norm_mid_point, norm_left_point, norm_right_point = cuestick_res
         cuestick_tip_res = find_cuestick_tip(frame)
-        cue_tip_x, cue_tip_y = cuestick_tip_res
+        if cuestick_tip_res:
+            cue_tip_x, cue_tip_y = cuestick_tip_res
         #
         # if cuestick_tip_res and cuestick_past_pos:
         #     speed = compute_cuestick_speed(cuestick_tip_res, cuestick_past_pos)

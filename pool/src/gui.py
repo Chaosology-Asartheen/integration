@@ -94,15 +94,24 @@ def draw_pool_table(screen, table: PoolTable):
 
 def draw_cue_stick(screen, table: PoolTable):
     if table.cue_front_point is None or table.cue_back_point is None:
+        print('draw_cue_stick -- returning without drawing...')
         return
     brown_rgb = (165, 42, 42)
     draw_line(screen, table.cue_front_point, table.cue_back_point, brown_rgb)
+
+    # Draw extended, floating cue stick line
+    if table.cue_stick_line_end is None:
+        return
+    draw_line(screen, table.cue_front_point, table.cue_stick_line_end, (255, 255, 255))
+
+
 
 def draw_ball_lines(screen, table: PoolTable):
     if table.ghost_ball_lines is {}:
         return
 
     for ball, ghost_lines in table.ghost_ball_lines.items():
+        print('ghost_ball_lines: ball={}, ghost_lines={}'.format(ball, ghost_lines))
         # Draw traveling line
         travel_line_start, travel_line_end = ball.pos, ghost_lines[0]
         draw_line(screen, travel_line_start, travel_line_end, ball.ball_type.color)

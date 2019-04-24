@@ -5,17 +5,17 @@ import cv2
 import sys
 import time
 
-sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
-sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
+# sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
+# sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
 # sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
 # sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
 # sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
 # print(sys.path)
-# sys.path.append('/Users/skim/ws/500')
-# sys.path.append('/Users/skim/ws/500/cv')
-# sys.path.append('/Users/skim/ws/500/pool')
+sys.path.append('/Users/skim/ws/500')
+sys.path.append('/Users/skim/ws/500/cv')
+sys.path.append('/Users/skim/ws/500/pool')
 
-from cv.hsv_filtering import find_cuestick, get_resized_frame
+from cv.hsv_filtering import find_cuestick, get_resized_frame, norm_coordinates
 from cv.hough_lines import compute_lines
 from cv.cv_ball import CVBall
 from cv.hough_circles import run_hough_circles
@@ -52,7 +52,7 @@ def main():
     table = PoolTable(nw, se)
 
     # Initialize CV info
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
     aggres = {}
     cc = ColorClassification(epsilon=30, threshold=4)
@@ -65,10 +65,13 @@ def main():
         # resize frame according to constants
         ret, frame = cap.read()
         frame = get_resized_frame(frame)
+        max_x = frame.shape[1]
+        max_y = frame.shape[0]
 
         # CV
         cv_balls = run_hough_circles(frame, aggres, cc)
         cuestick_res = find_cuestick(frame)
+        norm_mid_point = None
         if cuestick_res:
             norm_mid_point, norm_left_point, norm_right_point = cuestick_res
         cuestick_tip_res = find_cuestick_tip(frame)
@@ -77,13 +80,15 @@ def main():
 
         new_balls = []
         for k, v in cv_balls.items():
-            new_balls.append(CVBall(v[0], v[1], k))
+            x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
+            new_balls.append(CVBall(x, y, k))
 
         print(new_balls)
 
         # Pass parameters to pool
         table.place_cv_balls(new_balls)
-        # table.set_cv_cue_stick(cuestick_info)
+        if cuestick_tip_res is not None and norm_mid_point is not None:
+            table.set_cv_cue_stick([cuestick_tip_res, norm_mid_point])
 
         cv2.imshow('frame', frame)
 

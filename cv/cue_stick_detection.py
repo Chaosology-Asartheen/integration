@@ -5,6 +5,7 @@ cue stick tip's position and angle.
 import argparse
 import cv2
 import imutils
+import math
 import numpy as np
 
 import ball_initializer
@@ -15,13 +16,22 @@ import hsv_filtering
 DISPLAY_INTERMEDIATE = False
 DEBUG = False
 
+# TODO: Requires tuning
+# Min/max contour area for the cuestick tip
+MIN_TIP_AREA = 130
+MAX_TIP_AREA = 250
+
 # White cue stick rgb bounds
 CUE_LOWER = np.array([230,230,230]) #cue stick, using rgb as bounds
 CUE_UPPER = np.array([255,255,255])
 
-# Min/max contour area for the cuestick tip
-MIN_TIP_AREA = 130
-MAX_TIP_AREA = 250
+# Threshold for cuestick area being either a ball or cuestick
+IS_CIRCLE_THRESHOLD = 30
+
+# Cuestick distance cutoff (lower than cutoff = 0 speed) and max cuestick speed
+# for cuestick speed normalization
+DIST_CUTOFF = 1
+DIST_MAX = 15
 
 """find_cuestick utilizes RGB filtering to detect the cue stick position and angle.
 Args:
@@ -47,11 +57,12 @@ def find_cuestick(frame):
         cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
-        min_cuestick_area = table_pixel_width * 5
-        max_cuestick_area = table_pixel_width * 120
+        min_cuestick_area = table_pixel_width * 1.5
+        max_cuestick_area = table_pixel_width * 10
         contour_area = cv2.contourArea(cnt)
-        if DEBUG and contour_area > table_pixel_width:
-            print(str(contour_area) + " min: " + str(min_cuestick_area) + " max: " + str(max_cuestick_area) )
+        if DEBUG and contour_area > table_pixel_width * 1.5:
+            print(str(contour_area) + " min: " + str(min_cuestick_area) + " max: " + str(max_cuestick_area))
+
         # Only use contour within predetermined min/max cuestick contour area
         if (min_cuestick_area < contour_area < max_cuestick_area):
             rows,cols = frame.shape[:2]
@@ -105,7 +116,6 @@ def find_cuestick_tip(frame):
         if DEBUG:
             print(cv2.contourArea(contour))
         if (MIN_TIP_AREA < cv2.contourArea(contour) < MAX_TIP_AREA):
-            print(cv2.contourArea(contour))
             # Find min enclosing circle around the contour
             ((x, y), radius) = cv2.minEnclosingCircle(contour)
             cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
@@ -115,6 +125,37 @@ def find_cuestick_tip(frame):
             (table_x, table_y) = norm_x * constants.TABLE_LENGTH, norm_y * constants.TABLE_WIDTH
             # cv2.circle(frame, (int(x), int(y)), int(radius), (0,0,0), 2)
             return norm_x, norm_y
+
+"""Computes Euclidean distance between 2 points.
+Args:
+    a: (x,y) point 1
+    b: (x,y) point 2
+Returns:
+    distance between two points
+"""
+def distance_beween(a, b):
+    x1,y1 = a
+    x2,y2 = b
+    return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+
+"""Computes cuestick speed based on current and past cue tip positions.
+Args:
+    current_position: (x,y) position of cue tip
+    past_position: previous (x,y) position of cue tip
+Returns:
+    speed normalized between [0,1] based on positions.
+"""
+def compute_cuestick_speed(current_position, past_position):
+    past_x, past_y = past_position
+    x, y = current_position
+    distance = distance_beween(past_position, (x,y))
+    print("Dist: " + str(distance))
+    speed = 0
+    # Use cutoff in case of CV position detection jitter
+    if distance > DIST_CUTOFF:
+        # Normalize speed based on the DIST_MAX and DIST_CUTOFF aka min
+        speed = (distance - DIST_CUTOFF) / (DIST_MAX - DIST_CUTOFF)
+    return speed
 
 
 if __name__ == "__main__":
@@ -130,7 +171,8 @@ if __name__ == "__main__":
         DEBUG = True
 
     # Continuously read video camera input
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
+    cuestick_past_pos = None
     while True:
         ret, frame = cap.read()
         # Commented lines below are for static images
@@ -144,6 +186,12 @@ if __name__ == "__main__":
         frame = hsv_filtering.getResizedFrame(frame)
         cuestick_res = find_cuestick(frame)
         cuestick_tip_res = find_cuestick_tip(frame)
+        #
+        # if cuestick_tip_res and cuestick_past_pos:
+        #     speed = compute_cuestick_speed(cuestick_tip_res, cuestick_past_pos)
+        #     # print(speed)
+        # cuestick_past_pos = cuestick_tip_res
+
         cv2.imshow('frame', frame) # Display the frame results
         hsv_filtering.wait_escape() # Wait for escape key to view next frame
 

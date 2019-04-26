@@ -67,7 +67,7 @@ def gui_init():
     :return: pygame screen to use for all gui functions
     """
     pygame.init()
-    return pygame.display.set_mode(SCREEN_DIMENSIONS)
+    return pygame.display.set_mode(SCREEN_DIMENSIONS, pygame.RESIZABLE)
 
 
 def clear_screen(screen):
@@ -172,9 +172,9 @@ def gui_update(screen, table):
                 nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
                 se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
                 table = PoolTable(nw, se)
-            # elif event.type == VIDEORESIZE:
-                # size = event.dict['size']
-                # screen = pygame.display.set_mode(size, RESIZABLE)
+            elif event.type == pygame.VIDEORESIZE:
+                print("SCREEN RESIZED!!!")
+                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
 
 
     # Table time step

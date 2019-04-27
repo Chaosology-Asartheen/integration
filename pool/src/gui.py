@@ -67,7 +67,7 @@ def gui_init():
     :return: pygame screen to use for all gui functions
     """
     pygame.init()
-    return pygame.display.set_mode(SCREEN_DIMENSIONS, pygame.RESIZABLE)
+    return pygame.display.set_mode(SCREEN_DIMENSIONS)
 
 
 def clear_screen(screen):
@@ -99,10 +99,15 @@ def draw_cue_stick(screen, table: PoolTable):
     brown_rgb = (165, 42, 42)
     draw_line(screen, table.cue_front_point, table.cue_back_point, brown_rgb)
 
+    # Draw tiny red circle for the cue stick tip
+    draw_circle(screen, table.cue_front_point, 1, (255, 0, 0), filled=True)
+
     # Draw extended, floating cue stick line
-    if table.cue_stick_line_end is None:
-        return
-    draw_line(screen, table.cue_front_point, table.cue_stick_line_end, (255, 255, 255))
+    if table.floating_cue_stick:
+        assert table.cue_front_point is not None, 'table says floating cue stick, but cue front point is None'
+        assert table.floating_cue_stick_line_end is not None, 'table says floating cue stick, but cue stick line end is None'
+        draw_line(screen, table.cue_front_point, table.floating_cue_stick_line_end, (255, 255, 255))
+
 
 
 
@@ -172,9 +177,6 @@ def gui_update(screen, table):
                 nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
                 se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
                 table = PoolTable(nw, se)
-            elif event.type == pygame.VIDEORESIZE:
-                print("SCREEN RESIZED!!!")
-                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
 
 
     # Table time step
@@ -182,12 +184,14 @@ def gui_update(screen, table):
 
     # Draw pool table
     draw_pool_table(screen, table)
-    draw_cue_stick(screen, table)
     draw_ball_lines(screen, table)
 
     # Draw all pool balls
     for ball in balls:
         draw_pool_ball(screen, ball)
+
+    # Draw the physical cue stick
+    draw_cue_stick(screen, table)
 
     pygame.display.flip()
 

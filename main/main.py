@@ -39,6 +39,21 @@ def gui_main():
     table = PoolTable(nw, se)
 
     while 1:
+        # table.place_cv_balls(new_balls)
+        # if cuestick_tip_res is not None and norm_mid_point is not None:
+        #     table.set_cv_cue_stick([cuestick_tip_res, norm_mid_point])
+
+        # table.place_cv_balls(None)
+
+        # Cue stick on top of cue ball - unsure what to do in this case
+        table.set_cv_cue_stick([(0.1, 0.1), (0.3, 0.6)])
+
+        # Will hit cue ball
+        # table.set_cv_cue_stick([(0.1, 0.1), (0.175, 0.3)])
+
+        # Will miss cue ball
+        # table.set_cv_cue_stick([(0.1, 0.1), (0.5, 0.3)])
+
         gui_update(screen, table)
 
 

@@ -93,20 +93,20 @@ def draw_pool_table(screen, table: PoolTable):
         draw_circle(screen, hole_center, table.hole_radius, pocket_color, filled=True)
 
 def draw_cue_stick(screen, table: PoolTable):
-    if table.cue_front_point is None or table.cue_back_point is None:
+    if table.cue_stick_tip is None or table.cue_stick_back is None:
         print('draw_cue_stick -- returning without drawing...')
         return
     brown_rgb = (165, 42, 42)
-    draw_line(screen, table.cue_front_point, table.cue_back_point, brown_rgb)
+    draw_line(screen, table.cue_stick_tip, table.cue_stick_back, brown_rgb)
 
     # Draw tiny red circle for the cue stick tip
-    draw_circle(screen, table.cue_front_point, 1, (255, 0, 0), filled=True)
+    draw_circle(screen, table.cue_stick_tip, 1, (255, 0, 0), filled=True)
 
     # Draw extended, floating cue stick line
     if table.floating_cue_stick:
-        assert table.cue_front_point is not None, 'table says floating cue stick, but cue front point is None'
+        assert table.cue_stick_tip is not None, 'table says floating cue stick, but cue front point is None'
         assert table.floating_cue_stick_line_end is not None, 'table says floating cue stick, but cue stick line end is None'
-        draw_line(screen, table.cue_front_point, table.floating_cue_stick_line_end, (255, 255, 255))
+        draw_line(screen, table.cue_stick_tip, table.floating_cue_stick_line_end, (255, 255, 255))
 
 
 

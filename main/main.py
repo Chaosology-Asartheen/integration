@@ -11,6 +11,7 @@ import time
 # sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
 # sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
 # print(sys.path)
+
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
 sys.path.append('/Users/skim/ws/500/pool')
@@ -18,6 +19,7 @@ sys.path.append('/Users/skim/ws/500/pool')
 from cv.hsv_filtering import find_cuestick, get_resized_frame, norm_coordinates
 from cv.hough_lines import compute_lines
 from cv.cv_ball import CVBall
+from cv.cv_cue_stick import CVCueStick
 from cv.hough_circles import run_hough_circles
 from cv.modules.color_classification import ColorClassification
 from cv.cue_stick_detection import find_cuestick, find_cuestick_tip
@@ -45,14 +47,14 @@ def gui_main():
 
         # table.place_cv_balls(None)
 
-        # Cue stick on top of cue ball - unsure what to do in this case
-        table.set_cv_cue_stick([(0.1, 0.1), (0.3, 0.6)])
+        # Cue stick on top of cue ball
+        table.set_cv_cue_stick(CVCueStick(tip=(0.3, 0.6), back=(0.1, 0.1)))
 
-        # Will hit cue ball
-        # table.set_cv_cue_stick([(0.1, 0.1), (0.175, 0.3)])
+        # Striking would hit cue ball
+        # table.set_cv_cue_stick(CVCueStick(tip=(0.175, 0.3)back=, (0.1, 0.1)))
 
-        # Will miss cue ball
-        # table.set_cv_cue_stick([(0.1, 0.1), (0.5, 0.3)])
+        # Striking would miss cue ball
+        # table.set_cv_cue_stick(CVCueStick(tip=(0.5, 0.3), back=(0.1, 0.1)))
 
         gui_update(screen, table)
 
@@ -103,7 +105,8 @@ def main():
         # Pass parameters to pool
         table.place_cv_balls(new_balls)
         if cuestick_tip_res is not None and norm_mid_point is not None:
-            table.set_cv_cue_stick([cuestick_tip_res, norm_mid_point])
+            cv_cue_stick = CVCueStick(tip=cuestick_tip_res, back=norm_mid_point)
+            table.set_cv_cue_stick(cv_cue_stick)
 
         cv2.imshow('frame', frame)
 

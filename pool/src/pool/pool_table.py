@@ -3,6 +3,7 @@ from typing import List
 
 import numpy as np
 
+from cv.cv_cue_stick import CVCueStick
 from pool.src.physics.collisions import check_ball_wall_collision, resolve_ball_wall_collision, \
     check_ball_ball_collision, resolve_ball_ball_collision
 from pool.src.physics.coordinates import Coordinates
@@ -71,7 +72,7 @@ class PoolTable:
 
         # Cue stick
         if cv_cue_points is None: # Nothing given from CV input
-            self.cue_front_point = self.cue_back_point = None
+            self.cue_stick_tip = self.cue_stick_back = None
             self.floating_cue_stick = False
             self.cue_angle = 0
             self.floating_cue_stick_line_end = None
@@ -162,45 +163,34 @@ class PoolTable:
             if ball_type is BallType.CUE:
                 self.cue_ball = ball
 
-    def set_cv_cue_stick(self, points):
+    def set_cv_cue_stick(self, cv_cue_stick: CVCueStick):
         """
         Use 2 points to get the cue stick angle.
 
         :return:
         """
 
-        if points is None:
+        if cv_cue_stick.tip is None or cv_cue_stick.back is None:
             self.cue_angle = None
             return
 
         # Check if cue stick line intersects the cue ball
-        # def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
-        p1, p2 = self.convert_cv_coords(points[0][0], points[0][1]), self.convert_cv_coords(points[1][0], points[1][1])
+        self.cue_stick_tip = self.convert_cv_coords(cv_cue_stick.tip[0], cv_cue_stick.tip[1])
+        self.cue_stick_back = self.convert_cv_coords(cv_cue_stick.back[0], cv_cue_stick.back[1])
 
-        # FIXME: Tina needs to fix her cue stick stuff; currently assuming first point is 'tip'
-        self.cue_front_point = p2
-        self.cue_back_point = p1
 
         # ¯\_(ツ)_/¯
-        self.cue_angle = get_angle(self.cue_front_point, self.cue_back_point)
+        self.cue_angle = get_angle(self.cue_stick_tip, self.cue_stick_back)
 
         nw = Coordinates(self.left, self.top)
         se = Coordinates(self.right, self.bottom)
-        cue_stick_line_extended_end = get_line_endpoint_within_box(p1, self.cue_angle, nw, se, 1.0)
+        cue_stick_line_extended_end = get_line_endpoint_within_box(self.cue_stick_back, self.cue_angle, nw, se, 1.0)
 
-        if check_ray_circle_intersection(p2, cue_stick_line_extended_end, self.cue_ball.pos, self.cue_ball.radius):
-            print("#####################################################")
-            print("#####> CUE STICK IS INTERSECTING THE CUE BALL <#####")
-            print("#####################################################")
+        if check_ray_circle_intersection(self.cue_stick_tip, cue_stick_line_extended_end, self.cue_ball.pos, self.cue_ball.radius):
             self.floating_cue_stick = False
             self.floating_cue_stick_line_end = None
         else:
-            print("-----------------------------------------------------")
-            print("-----> CUE STICK NOT INTERSECTING THE CUE BALL <-----")
-            print("-----------------------------------------------------")
             self.floating_cue_stick = True
-
-
             self.floating_cue_stick_line_end = cue_stick_line_extended_end
 
 

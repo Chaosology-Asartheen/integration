@@ -11,11 +11,13 @@ from pool.src.pool.ball_type import BallType
 from pool.src.pool.pool_ball import PoolBall
 from pool.src.pool.pool_table import PoolTable
 
-# SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1200, 1200
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573, 768  # Table fits entire screen
-# SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, int(TABLE_LENGTH / 2.1352313167)
-# SCREEN_DIMENSIONS = TABLE = 1573, 768
 TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
+
+# Use these for projector output
+# SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573, 768  # Table fits entire screen
+
+# Use these for Macbook Pro 13" mirroring
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573 + 95, 768  # Table fits entire screen
 
 BACKGROUND_COLOR = (0, 0, 0)
 FOREST_GREEN = (1, 68, 33)
@@ -143,7 +145,7 @@ def draw_ball_lines(screen, table: PoolTable):
 
 def draw_pool_ball(screen, ball: PoolBall):
     # Draw a circle
-    draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=True)
+    draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=False)
 
 
 def gui_update(screen, table):

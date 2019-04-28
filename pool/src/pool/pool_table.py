@@ -68,13 +68,13 @@ class PoolTable:
             assert (BallType.CUE in self.balls)
             self.cue_ball = self.balls[BallType.CUE]
         else:
-            self.place_cv_balls(cv_cue_points)
+            self.set_cv_balls(cv_cue_points)
 
         # Cue stick
         if cv_cue_points is None: # Nothing given from CV input
             self.cue_stick_tip = self.cue_stick_back = None
             self.floating_cue_stick = False
-            self.cue_angle = 0
+            self.cue_angle = None
             self.floating_cue_stick_line_end = None
         else:
             self.set_cv_cue_stick(cv_cue_points)
@@ -106,7 +106,7 @@ class PoolTable:
         """
 
         new_x = self.left + self.length * cv_x
-        new_y = self.bottom + self.width * (1.0 - cv_y)
+        new_y = self.bottom  + self.width * (1.0 - cv_y)
         return Coordinates(new_x, new_y)
 
     def convert_cv_color(self, color):
@@ -133,7 +133,7 @@ class PoolTable:
             return BallType.EIGHT
             # raise Exception('unknown cv ball color -- find Tina and throw saas at her')
 
-    def place_cv_balls(self, cv_balls: List[CVBall]):
+    def set_cv_balls(self, cv_balls: List[CVBall]):
         """
         Place pool balls from locations given by CV module.
 
@@ -170,10 +170,11 @@ class PoolTable:
         :return:
         """
 
-        if cv_cue_stick.tip is None or cv_cue_stick.back is None:
+        if cv_cue_stick is None or cv_cue_stick.tip is None or cv_cue_stick.back is None:
+            self.cue_stick_tip = self.cue_stick_back = None
+            self.floating_cue_stick = False
             self.cue_angle = None
-            # self.cue_front_point = None
-            # self.cue_back_point = None
+            self.floating_cue_stick_line_end = None
             return
 
         # Check if cue stick line intersects the cue ball
@@ -564,7 +565,8 @@ class PoolTable:
         """
 
         # If cue ball is currently pocketed OR if cue stick not lined up with cue ball, skip
-        if self.cue_ball is None or self.floating_cue_stick:
+        if self.cue_ball is None or self.cue_angle is None or self.floating_cue_stick:
+            self.ghost_ball_lines = {} # Reset all the lines
             return
 
         # Reset lines

@@ -10,17 +10,10 @@ import time
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
-# print(sys.path)
-<<<<<<< HEAD
-# sys.path.append('/Users/skim/ws/500')
-# sys.path.append('/Users/skim/ws/500/cv')
-# sys.path.append('/Users/skim/ws/500/pool')
-=======
 
 sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
 sys.path.append('/Users/skim/ws/500/pool')
->>>>>>> b386db7c18489f3bcfeb2dfd38368a6ac134c399
 
 from cv.hsv_filtering import find_cuestick, get_resized_frame, norm_coordinates
 from cv.hough_lines import compute_lines
@@ -114,10 +107,10 @@ def main():
         print(new_balls)
 
         # Pass parameters to pool
-        table.place_cv_balls(new_balls)
-        if cuestick_tip_res is not None and norm_mid_point is not None:
-            cv_cue_stick = CVCueStick(tip=cuestick_tip_res, back=norm_mid_point)
-            table.set_cv_cue_stick(cv_cue_stick)
+        table.set_cv_balls(new_balls)
+
+        cv_cue_stick = CVCueStick(tip=cuestick_tip_res, back=norm_mid_point)
+        table.set_cv_cue_stick(cv_cue_stick)
 
         cv2.imshow('output', output)
 

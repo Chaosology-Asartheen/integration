@@ -16,20 +16,24 @@ MAX_RADIUS = 20
 RGB_EPSILON = 30
 
 # target values, will hit within EPSILON
-RGB_TARGETS = {"white": (255, 255, 255),
-            "green": (15, 160, 160),
-            "purple": (40, 60, 140)}
+RGB_TARGETS = {"white": (245, 245, 245),
+            #"green": (10, 160, 160),
+            "purple": (30, 0, 90),
+            "orange": (240, 240, 0),
+            "black": (50, 20, 20)}
 
 # what to show when debugging
 DISPLAY_COLORS = {"white": (255, 255, 255),
-                "green": (0, 255, 0),
-                "purple": (128, 0, 128)}
+                #"green": (0, 255, 0),
+                "purple": (128, 0, 128),
+                "orange": (255, 255, 0),
+                "black": (0, 0, 0)}
 
 # pockets, usually
-ignore_regions = [((0, 0), (151, 108)), # top left
-                ((431, 0), (457, 104)), # top middle
-                ((736, 0), (900, 120)), # top right
-                ((0, 351), (154, 600)), # bottom left
-                ((428, 368), (456, 600)), # bottom middle
-                ((727, 361), (900, 600)) # bottom right
+ignore_regions = [((0, 0), (35, 85)), # top left
+                ((370, 0), (450, 80)), # top middle
+                ((758, 0), (800, 94)), # top right
+                ((0, 390), (64, 448)), # bottom left
+                ((380, 371), (455, 450)), # bottom middle
+                ((737, 366), (800, 450)) # bottom right
                 ]

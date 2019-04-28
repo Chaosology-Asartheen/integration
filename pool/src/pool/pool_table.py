@@ -171,6 +171,8 @@ class PoolTable:
 
         if points is None:
             self.cue_angle = None
+            # self.cue_front_point = None
+            # self.cue_back_point = None
             return
 
         # Check if cue stick line intersects the cue ball
@@ -184,22 +186,27 @@ class PoolTable:
         # ¯\_(ツ)_/¯
         self.cue_angle = get_angle(self.cue_back_point, self.cue_front_point)
 
-        # if not check_ray_circle_intersection(p1, p2, self.cue_ball.pos, self.cue_ball.radius):
-        #     print("-----------------------------------------------------")
-        #     print("-----> CUE STICK NOT INTERSECTING THE CUE BALL <-----")
-        #     print("-----------------------------------------------------")
-        #     self.cue_stick_intersecting = False
-        #
-        #     nw = Coordinates(self.left, self.top)
-        #     se = Coordinates(self.right, self.bottom)
-        #     self.cue_stick_line_end = get_line_endpoint_within_box(p1, self.cue_angle, nw, se, 1.0)
-        #
-        # else:
-        #     print("#####################################################")
-        #     print("#####> CUE STICK IS INTERSECTING THE CUE BALL <#####")
-        #     print("#####################################################")
-        #     self.cue_stick_intersecting = True
+        """
+        if not check_ray_circle_intersection(p1, p2, self.cue_ball.pos, self.cue_ball.radius):
+            print("-----------------------------------------------------")
+            print("-----> CUE STICK NOT INTERSECTING THE CUE BALL <-----")
+            print("-----------------------------------------------------")
+
+            nw = Coordinates(self.left, self.top)
+            se = Coordinates(self.right, self.bottom)
+            self.cue_stick_line_end = get_line_endpoint_within_box(p1, self.cue_angle, nw, se, 1.0)
+
+            # self.cue_stick_intersecting = False
+            return
+
+
+        else:
+            print("#####################################################")
+            print("#####> CUE STICK IS INTERSECTING THE CUE BALL <#####")
+            print("#####################################################")
+            self.cue_stick_intersecting = True
         #     self.cue_stick_line_end = None
+    """
 
 
 
@@ -570,7 +577,7 @@ class PoolTable:
         """
 
         # If cue ball is currently pocketed, skip
-        if self.cue_ball is None:
+        if self.cue_ball is None or self.cue_angle is None:
             return
 
         # Reset lines

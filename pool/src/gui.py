@@ -11,13 +11,16 @@ from pool.src.pool.ball_type import BallType
 from pool.src.pool.pool_ball import PoolBall
 from pool.src.pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1200, 1200
-TABLE_LENGTH = 1200
-TABLE_WIDTH = TABLE_LENGTH / 2.1352313167
+# SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1200, 1200
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573, 768  # Table fits entire screen
+# SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, int(TABLE_LENGTH / 2.1352313167)
+# SCREEN_DIMENSIONS = TABLE = 1573, 768
 TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
 
 BACKGROUND_COLOR = (0, 0, 0)
-TABLE_COLOR = (1, 68, 33)
+FOREST_GREEN = (1, 68, 33)
+BLACK = (0,0,0)
+TABLE_COLOR = FOREST_GREEN
 CUE_STICK_LINE_COLOR = (255, 255, 255)
 POCKET_COLOR = (255, 0, 0)
 """
@@ -67,7 +70,7 @@ def gui_init():
     :return: pygame screen to use for all gui functions
     """
     pygame.init()
-    return pygame.display.set_mode(SCREEN_DIMENSIONS, pygame.RESIZABLE)
+    return pygame.display.set_mode(SCREEN_DIMENSIONS)
 
 
 def clear_screen(screen):
@@ -90,12 +93,20 @@ def draw_pool_table(screen, table: PoolTable):
     # Draw table pockets
     pocket_color = (0, 0, 0)
     for hole_center in table.hole_centers:
-        draw_circle(screen, hole_center, table.hole_radius, pocket_color, filled=True)
+        # draw_circle(screen, hole_center, table.hole_radius, pocket_color, filled=True)
+        # Draw a rectangle for pockets, instead
+        left_top_coords = Coordinates(hole_center.x - table.hole_radius, hole_center.y + table.hole_radius)
+        left_top_pg = coords_to_pygame(left_top_coords, HEIGHT)
+        width = height = 2 * table.hole_radius
+        pygame.draw.rect(screen, pocket_color, pygame.Rect(left_top_pg.x, left_top_pg.y, width, height), 0)
 
 def draw_cue_stick(screen, table: PoolTable):
     if table.cue_front_point is None or table.cue_back_point is None:
         print('draw_cue_stick -- returning without drawing...')
+        print('draw_cue_stick -- returning without drawing...')
+        print('draw_cue_stick -- returning without drawing...')
         return
+
     brown_rgb = (165, 42, 42)
     draw_line(screen, table.cue_front_point, table.cue_back_point, brown_rgb)
 
@@ -136,6 +147,7 @@ def gui_update(screen, table):
 
     clear_screen(screen)
 
+
     # Check Pygame events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -172,17 +184,16 @@ def gui_update(screen, table):
                 nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
                 se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
                 table = PoolTable(nw, se)
-            elif event.type == pygame.VIDEORESIZE:
-                print("SCREEN RESIZED!!!")
-                screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
-
+        elif event.type == pygame.VIDEORESIZE:
+            print("SCREEN RESIZED TO ({}, {})".format(event.w, event.h))
+            screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
 
     # Table time step
     table.time_step()
 
     # Draw pool table
     draw_pool_table(screen, table)
-    draw_cue_stick(screen, table)
+    # draw_cue_stick(screen, table)
     draw_ball_lines(screen, table)
 
     # Draw all pool balls

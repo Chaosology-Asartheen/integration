@@ -19,3 +19,9 @@ TEAL = (0, 128, 128)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
 ORANGE = (255, 165, 0)
+
+# Darker colors here
+DARK_PURPLE = (128, 0, 128) # Same as regular Purple
+DARK_GREEN = (0, 148, 0)
+DARK_WHITE = (150, 150, 150)
+DARK_BLUE = (0, 0, 143)

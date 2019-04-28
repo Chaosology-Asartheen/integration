@@ -18,8 +18,11 @@ DEBUG = False
 
 # TODO: Requires tuning
 # Min/max contour area for the cuestick tip
-MIN_TIP_AREA = 30
-MAX_TIP_AREA = 200
+MIN_TIP_AREA = 200
+MAX_TIP_AREA = 350
+# Min/max contour area for the cuestick length
+MIN_CUESTICK_AREA = 750
+MAX_CUESTICK_AREA = 4500
 
 # White cue stick rgb bounds
 CUE_LOWER = np.array([230,230,230]) #cue stick, using rgb as bounds
@@ -41,7 +44,7 @@ Returns:
     normalized coordinates [0,1] of the cuestick. Mid_point is a point on the cue stick,
     left/right are points on the left/right edges of the frame where the cuestick line intersects.
 """
-def find_cuestick(frame):
+def find_cuestick(frame, output):
     table_pixel_length = frame.shape[1]
     table_pixel_width = frame.shape[0]
     mask = cv2.inRange(frame, CUE_LOWER, CUE_UPPER)
@@ -57,14 +60,12 @@ def find_cuestick(frame):
         cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
-        min_cuestick_area = table_pixel_width * 2
-        max_cuestick_area = table_pixel_width * 15
         contour_area = cv2.contourArea(cnt)
         if DEBUG and contour_area > table_pixel_width * 1.5:
-            print(str(contour_area) + " min: " + str(min_cuestick_area) + " max: " + str(max_cuestick_area))
+            print(str(contour_area) + " min: " + str(MIN_CUESTICK_AREA) + " max: " + str(MAX_CUESTICK_AREA))
 
         # Only use contour within predetermined min/max cuestick contour area
-        if (min_cuestick_area < contour_area < max_cuestick_area):
+        if (MIN_CUESTICK_AREA < contour_area < MAX_CUESTICK_AREA):
             rows,cols = frame.shape[:2]
             # OpenCV's line-fitting algorithm
             [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
@@ -76,10 +77,14 @@ def find_cuestick(frame):
             mid_point = (int(x), int(y))
             left_point = (int(0),int(left_y))
             right_point = (int(cols-1),int(right_y))
-            cv2.circle(frame, mid_point, 2, (0,0,255), 2)
-            cv2.circle(frame, left_point, 2, (0,0,255), 2)
-            cv2.circle(frame, right_point, 2, (0,0,255), 2)
-            cv2.line(frame,(cols-1,right_y),(0,left_y),(255,255,255),2)
+            try:
+                cv2.circle(output, mid_point, 2, (0,0,255), 2)
+                cv2.circle(output, left_point, 2, (0,0,255), 2)
+                cv2.circle(output, right_point, 2, (0,0,255), 2)
+                cv2.line(output,(cols-1,right_y),(0,left_y),(255,255,255),2)
+
+            except:
+                print("mid {} left {} right {}".format(mid_point, left_point, right_point))
 
             # Normalize coordinates for software backend
             norm_mid_point = hsv_filtering.norm_coordinates(mid_point[0], mid_point[1], 0, table_pixel_length, 0, table_pixel_width)
@@ -93,7 +98,7 @@ Args:
 Returns:
     (norm_x, norm_y): normalized x,y coordinates of the cue stick tip
 """
-def find_cuestick_tip(frame):
+def find_cuestick_tip(frame, output):
     table_pixel_length = frame.shape[1]
     table_pixel_width = frame.shape[0]
 
@@ -101,7 +106,7 @@ def find_cuestick_tip(frame):
     hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # Generating mask based on lower/upper red values for HSV filtering
     mask = cv2.inRange(hsv_img, ball_initializer.LOWER_RED, ball_initializer.UPPER_RED)
-    mask = cv2.dilate(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=3)
 
     res = cv2.bitwise_and(frame,frame, mask=mask)
     if DISPLAY_INTERMEDIATE:
@@ -114,11 +119,11 @@ def find_cuestick_tip(frame):
     contours = imutils.grab_contours(cnts)
     for contour in contours:
         if DEBUG:
-            print(cv2.contourArea(contour))
+            print("Cuestick Tip contourArea {}".format(cv2.contourArea(contour)))
         if (MIN_TIP_AREA < cv2.contourArea(contour) < MAX_TIP_AREA):
             # Find min enclosing circle around the contour
             ((x, y), radius) = cv2.minEnclosingCircle(contour)
-            cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
+            cv2.circle(output, (int(x), int(y)), 2, (0, 255, 0), -1)
             # Compute normalized coordinates [0,1] for ball position
             (norm_x, norm_y) = hsv_filtering.norm_coordinates(x, y, 0, table_pixel_length, 0, table_pixel_width)
             # Compute table/irl coordinates for ball position
@@ -183,19 +188,26 @@ if __name__ == "__main__":
             if DEBUG:
                 print("no frame")
             continue
+        # cv2.imwrite("red.png", frame)
         frame = hsv_filtering.get_resized_frame(frame)
-        cuestick_res = find_cuestick(frame)
+        output = frame.copy()
+        cuestick_res = find_cuestick(frame, output)
         # norm_mid_point, norm_left_point, norm_right_point = cuestick_res
-        cuestick_tip_res = find_cuestick_tip(frame)
-        if cuestick_tip_res:
-            cue_tip_x, cue_tip_y = cuestick_tip_res
+        cuestick_tip_res = find_cuestick_tip(frame, output)
+        # if cuestick_tip_res:
+        #     cue_tip_x, cue_tip_y = cuestick_tip_res
         #
-        # if cuestick_tip_res and cuestick_past_pos:
+        if cuestick_tip_res and cuestick_res:
+            norm_mid_point, norm_left_point, norm_right_point = cuestick_res
+            cue_tip_x, cue_tip_y = cuestick_tip_res
+            cv2.line(output,(int(cue_tip_x),int(cue_tip_y)),(int(norm_mid_point[0]),int(norm_mid_point[1])),(0,0,0),2)
+        else:
+            print("************************************************************")
         #     speed = compute_cuestick_speed(cuestick_tip_res, cuestick_past_pos)
         #     # print(speed)
         # cuestick_past_pos = cuestick_tip_res
 
-        cv2.imshow('frame', frame) # Display the frame results
+        cv2.imshow('output', output) # Display the frame results
         hsv_filtering.wait_escape() # Wait for escape key to view next frame
 
     cap.release()

@@ -31,7 +31,7 @@ class ColorClassification(object):
         return res
 
     # returns color string
-    def determine_color(self, img, x, y, radius=10, step=1):
+    def determine_color(self, img, x, y, radius=15, step=1):
         x = int(x)
         y = int(y)
 
@@ -40,9 +40,12 @@ class ColorClassification(object):
             votes[color] = 0
             for row in range(y - radius, y + radius, step):
                 for col in range(x - radius, x + radius, step):
-                    pixel = img[row][col]
-                    if self.is_color(pixel, color):
-                        votes[color] += 1
+                    try:
+                        pixel = img[row][col]
+                        if self.is_color(pixel, color):
+                            votes[color] += 1
+                    except:
+                        pass
 
         if len(votes) < 1:
             return "no color"

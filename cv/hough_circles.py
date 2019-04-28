@@ -7,14 +7,15 @@ from datetime import datetime
 
 import time
 import sys
-sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
-sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
+# sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
+# sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
 from cv.modules.average_queue import AverageQueue
 from cv.modules.color_classification import ColorClassification
 import cv.constants as constants
 
-def run_hough_circles(image, aggres, cc, display=False):
-    output = image.copy()
+def run_hough_circles(image, output, aggres, cc, display=False):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # detect circles in the image
@@ -36,7 +37,7 @@ def run_hough_circles(image, aggres, cc, display=False):
     def in_range(coord):
         x, y = coord[0], coord[1]
         for ((ux, uy), (lx, ly)) in constants.ignore_regions:
-            if (ux <= x <= lx) or (uy <= y <= ly):
+            if (ux <= x <= lx) and (uy <= y <= ly):
                 return False
         return True
 
@@ -45,7 +46,9 @@ def run_hough_circles(image, aggres, cc, display=False):
     colors = []
 
     # debug print of all circles found
-    #print(np.sort(circles, axis=0))
+    print(np.sort(circles, axis=0))
+
+    result2 = {}
 
     # loop over the (x, y) coordinates and radius of the circles
     for (x, y, r) in circles:
@@ -53,12 +56,22 @@ def run_hough_circles(image, aggres, cc, display=False):
         color_str = cc.determine_color(image, x, y)
         colors.append(color_str)
 
+        result2[color_str] = (x, y)
+
         if not (color_str) in aggres:
             aggres[color_str] = AverageQueue(limit=5)
 
         aggres[color_str].add(x, y)
 
-        if True: # change me to stop using this average queue
+
+        # else:
+        # print("Can't find a bucket for this", x, y, color_str)
+        rgb = cc.get_rgb_value(color_str)
+        bgr = rgb[2],rgb[1],rgb[0]
+        cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2),bgr, -1)
+        cv2.rectangle(output, (x - 3, y - 3), (x + 3, y + 3),(0,0,0), 1)
+
+        if False: # change me to stop using this average queue
             ave_x, ave_y = aggres[color_str].get_average()
             ave_x = int(ave_x)
             ave_y = int(ave_y)
@@ -68,12 +81,10 @@ def run_hough_circles(image, aggres, cc, display=False):
             # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
             cv2.rectangle(output, (ave_x - 2, ave_y - 2), (ave_x + 2, ave_y + 2), (20,255,57), -1)
             # cv2.rectangle(output, (x - 1, y - 1), (x + 1, y + 1), color_val, -1)
-        else:
-            print("Can't find a bucket for this", x, y, color_str)
-            cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2), (255, 20, 57), -1)
 
     for ((x, y), (w, z)) in constants.ignore_regions:
         cv2.rectangle(output, (x, y), (w, z), (255, 255, 255), 1)
+
 
     result = {}
     for k, v in aggres.items():
@@ -82,11 +93,11 @@ def run_hough_circles(image, aggres, cc, display=False):
     # show the output image, if prompted to by display flag
     if display:
         print(circles, colors)
-        cv2.imshow("output", output)
-        res = cv2.waitKey(0)
 
-    print(result)
-    return result
+
+
+    print(result2)
+    return result2
 
 def main(display):
     cap = cv2.VideoCapture(1)
@@ -104,7 +115,10 @@ def main(display):
         frame_width = frame.shape[1]
         resize_frame_height = int(frame_height / frame_width * constants.RESIZE_FRAME_WIDTH)
         frame = cv2.resize(frame, (constants.RESIZE_FRAME_WIDTH, resize_frame_height))
-        cv_balls = run_hough_circles(frame, aggres, cc, display=display)
+        output = frame.copy()
+        cv_balls = run_hough_circles(frame, output,aggres, cc, display=display)
+        cv2.imshow("output", output)
+        res = cv2.waitKey(0)
 
 if __name__ == "__main__":
     main(display=True)

@@ -4,13 +4,13 @@ from pool.src.pool import colors
 
 
 class BallType(Enum):
-    CUE = ('0', colors.WHITE)
+    CUE = ('0', colors.DARK_WHITE)
     ONE = ('1', colors.YELLOW)
-    TWO = ('2', colors.BLUE)
+    TWO = ('2', colors.DARK_BLUE)
     THREE = ('3', colors.RED)
-    FOUR = ('4', colors.PURPLE)
+    FOUR = ('4', colors.DARK_PURPLE)
     FIVE = ('5', colors.ORANGE)
-    SIX = ('6', colors.GREEN)
+    SIX = ('6', colors.DARK_GREEN)
     SEVEN = ('7', colors.MAROON)
     EIGHT = ('8', colors.BLACK)
     NINE = ('9', colors.SILVER)

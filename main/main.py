@@ -7,13 +7,13 @@ import time
 
 # sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
 # sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
-# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
-# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
-# sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
+sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
 # print(sys.path)
-sys.path.append('/Users/skim/ws/500')
-sys.path.append('/Users/skim/ws/500/cv')
-sys.path.append('/Users/skim/ws/500/pool')
+# sys.path.append('/Users/skim/ws/500')
+# sys.path.append('/Users/skim/ws/500/cv')
+# sys.path.append('/Users/skim/ws/500/pool')
 
 from cv.hsv_filtering import find_cuestick, get_resized_frame, norm_coordinates
 from cv.hough_lines import compute_lines
@@ -23,7 +23,7 @@ from cv.modules.color_classification import ColorClassification
 from cv.cue_stick_detection import find_cuestick, find_cuestick_tip
 import cv.constants as constants
 
-from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_LENGTH, gui_update, gui_init
+from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_WIDTH, TABLE_LENGTH, gui_update, gui_init
 from pool.src.pool.pool_table import PoolTable
 
 
@@ -34,8 +34,9 @@ def gui_main():
     screen = gui_init()
 
     # Create pool table
+    # TABLE_LENGTH, TABLE_WIDTH
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
-    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
     table = PoolTable(nw, se)
 
     while 1:
@@ -52,7 +53,7 @@ def main():
     table = PoolTable(nw, se)
 
     # Initialize CV info
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     aggres = {}
     cc = ColorClassification(epsilon=30, threshold=4)
@@ -65,16 +66,20 @@ def main():
         # resize frame according to constants
         ret, frame = cap.read()
         frame = get_resized_frame(frame)
+        frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
+        frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
         max_x = frame.shape[1]
         max_y = frame.shape[0]
 
+        output = frame.copy()
+
         # CV
-        cv_balls = run_hough_circles(frame, aggres, cc)
-        cuestick_res = find_cuestick(frame)
+        cv_balls = run_hough_circles(frame, output, aggres, cc, display=True)
+        cuestick_res = find_cuestick(frame, output)
         norm_mid_point = None
         if cuestick_res:
             norm_mid_point, norm_left_point, norm_right_point = cuestick_res
-        cuestick_tip_res = find_cuestick_tip(frame)
+        cuestick_tip_res = find_cuestick_tip(frame, output)
         if cuestick_tip_res:
             cue_tip_x, cue_tip_y = cuestick_tip_res
 
@@ -90,9 +95,9 @@ def main():
         if cuestick_tip_res is not None and norm_mid_point is not None:
             table.set_cv_cue_stick([cuestick_tip_res, norm_mid_point])
 
-        cv2.imshow('frame', frame)
+        cv2.imshow('output', output)
 
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
         # Here, update GUI
         gui_update(screen, table)
 
@@ -102,5 +107,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    gui_main()
+    main()
+    # gui_main()

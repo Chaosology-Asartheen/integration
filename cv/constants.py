@@ -30,10 +30,10 @@ DISPLAY_COLORS = {"white": (255, 255, 255),
                 "black": (0, 0, 0)}
 
 # pockets, usually
-ignore_regions = [((0, 0), (35, 85)), # top left
-                ((370, 0), (450, 80)), # top middle
-                ((758, 0), (800, 94)), # top right
-                ((0, 390), (64, 448)), # bottom left
-                ((380, 371), (455, 450)), # bottom middle
-                ((737, 366), (800, 450)) # bottom right
+ignore_regions = [((0, 0), (50, 35)), # top left
+                  ((400, 0), (460, 30)), # top middle
+                  ((778, 0), (800, 50)), # top right
+                  ((0, 335), (67, 448)), # bottom left
+                  ((395, 346), (455, 450)), # bottom middle
+                  ((752, 324), (800, 450)) # bottom right
                 ]

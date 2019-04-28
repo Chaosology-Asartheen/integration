@@ -105,8 +105,11 @@ class PoolTable:
         :return: proper Coordinates for the pool table
         """
 
-        new_x = self.left + self.length * cv_x
-        new_y = self.bottom  + self.width * (1.0 - cv_y)
+        X_OFFSET, Y_OFFSET = -5, 0
+        X_SCALE, Y_SCALE = 1, 1
+
+        new_x = self.left + X_OFFSET + self.length * cv_x * X_SCALE
+        new_y = self.bottom  + Y_OFFSET + self.width * (1.0 - cv_y) * Y_SCALE
         return Coordinates(new_x, new_y)
 
     def convert_cv_color(self, color):

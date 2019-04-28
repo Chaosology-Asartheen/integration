@@ -65,7 +65,7 @@ def main():
 
     # Initialize pool table here
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
-    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
     table = PoolTable(nw, se)
 
     # Initialize CV info
@@ -84,6 +84,9 @@ def main():
         frame = get_resized_frame(frame)
         frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
         frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
+        frame_y1, frame_y2 = 77, 450
+        frame_x1, frame_x2 = 0, 800
+        frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         max_x = frame.shape[1]
         max_y = frame.shape[0]
 

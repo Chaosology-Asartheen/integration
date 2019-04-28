@@ -105,11 +105,20 @@ class PoolTable:
         :return: proper Coordinates for the pool table
         """
 
-        X_OFFSET, Y_OFFSET = -5, 0
-        X_SCALE, Y_SCALE = 1, 1
+        print("convert_cv_coords input: ({}, {})".format(cv_x, cv_y))
+
+        # Hard-coded offsets to align projector output
+        if cv_x < 0.6:
+            X_OFFSET = -5
+            X_SCALE = 1.025
+        else:
+            X_OFFSET = 10
+            X_SCALE = 1.0
+        Y_OFFSET = -13
+        Y_SCALE = 1.0
 
         new_x = self.left + X_OFFSET + self.length * cv_x * X_SCALE
-        new_y = self.bottom  + Y_OFFSET + self.width * (1.0 - cv_y) * Y_SCALE
+        new_y = self.bottom - Y_OFFSET + self.width * (1.0 - cv_y) * Y_SCALE
         return Coordinates(new_x, new_y)
 
     def convert_cv_color(self, color):
@@ -153,6 +162,10 @@ class PoolTable:
 
         # Initialize empty ball list
         self.balls = {}
+
+        # If CV detected no balls
+        if cv_balls is None or cv_balls is []:
+            return
 
         # Convert each CVBall to a PoolBall
         for cv_ball in cv_balls:
@@ -315,9 +328,6 @@ class PoolTable:
             balls[BallType.EIGHT].pos.x = balls[BallType.SEVEN].pos.x + np.sqrt(3) * r
             balls[BallType.EIGHT].pos.y = balls[BallType.SEVEN].pos.y + r
 
-            for ball in self.balls.values():
-                print('ball {} at {}'.format(ball.ball_type, ball.pos))
-
     def pocket_balls(self):
         """
         Call this method to check if any balls should be pocketed and remove them from play.
@@ -333,7 +343,6 @@ class PoolTable:
                 d = get_distance(ball.pos, pocket_pos)
                 pocketed = d < self.hole_radius
                 if pocketed:
-                    print("Ball {} is pocketed into {}".format(ball_name, pocket_pos))
                     pocketed_ball_names.append(ball_name)
 
         # Remove these balls from play
@@ -347,9 +356,6 @@ class PoolTable:
                 self.balls[ball_name].pos.x = self.left + (CUE_START_DIAMOND / LONG_DIAMONDS) * self.length
                 self.balls[ball_name].pos.y = self.bottom + self.width / 2 + 20
                 self.balls[ball_name].vel.x = self.balls[ball_name].vel.y = 0
-
-                print("CUE BALL POCKETED...")
-                print("CUE BALL POS: {}".format(self.cue_ball.pos))
 
     def get_balls_by_distance(self, ball_pos: Coordinates) -> List[PoolBall]:
         """
@@ -453,7 +459,6 @@ class PoolTable:
                 # TODO: Check if enough there's velocity to make it to the ball
                 d, vf_mag = PoolTable.check_enough_speed(struck_ball.pos, object_ball.pos, v_start)
                 if d is not None: # Not enough speed
-                    print("STRUCK BALL DIDN'T MAKE IT TO OBJECT BALL...")
                     ghost_start = ghost_end = Coordinates(
                         struck_ball.pos.x + d * np.cos(np.radians(v_start.get_angle())),
                         struck_ball.pos.y + d * np.sin(np.radians(v_start.get_angle())))
@@ -495,7 +500,6 @@ class PoolTable:
 
                 d, vf_mag = PoolTable.check_enough_speed(ghost_start, ghost_cushion, vf)
                 if d is not None: # Didn't make it to the cushion
-                    print("STRUCK BALL DEFLECTED OFF ANOTHER BALL DIDN'T MAKE IT TO CUSHION...")
                     ghost_end = Coordinates(
                         ghost_start.x + d * np.cos(np.radians(struck_deflect_angle)),
                         ghost_start.y + d * np.sin(np.radians(struck_deflect_angle))
@@ -524,7 +528,6 @@ class PoolTable:
         # Check if struck ball makes it to the cushion
         d, vf_mag = PoolTable.check_enough_speed(struck_ball.pos, struck_ball_on_cushion.pos, v_start)
         if d is not None:  # Not enough speed
-            print("STRUCK BALL DIDN'T MAKE IT TO CUSHION...")
             ghost_start = ghost_end = Coordinates(
                 struck_ball.pos.x + d * np.cos(np.radians(v_start.get_angle())),
                 struck_ball.pos.y + d * np.sin(np.radians(v_start.get_angle())))
@@ -546,7 +549,6 @@ class PoolTable:
         d, vf_mag = PoolTable.check_enough_speed(ghost_start, ghost_end, vf)
 
         if d is not None:  # Didn't make it to the cushion
-            print("STRUCK BALL DEFLECTED OFF CUSHION DIDN'T MAKE IT TO CUSHION...")
             ghost_end = Coordinates(
                 ghost_start.x + d * np.cos(np.radians(deflection_angle)),
                 ghost_start.y + d * np.sin(np.radians(deflection_angle))
@@ -579,7 +581,6 @@ class PoolTable:
         self.cue_ball_vel = Vector(np.cos(np.radians(self.cue_angle)), np.sin(np.radians(self.cue_angle)))
         cue_ghost_start, cue_ghost_end, collided_ball, collided_ball_vel = self.ball_hit(self.cue_ball_vel,
                                                                                          self.cue_ball)
-        print('collided_ball: {}, collided_ball_vel: {}'.format(collided_ball, collided_ball_vel))
 
         # Update map for cue ball
         self.ghost_ball_lines[self.cue_ball] = (cue_ghost_start, cue_ghost_end)
@@ -612,12 +613,10 @@ class PoolTable:
             # Check ball-wall collision
             ball_wall_collision = check_ball_wall_collision(balls[i], self.top, self.left, self.bottom, self.right)
             if ball_wall_collision is not None:
-                # print("BALL {}, WALL {}".format(balls[i], ball_wall_collision))
                 resolve_ball_wall_collision(balls[i], ball_wall_collision)
 
             for j in range(i + 1, len(balls)):
                 if check_ball_ball_collision(balls[i], balls[j]):
-                    # print("BALL {}, BALL {}".format(balls[i], balls[j]))
                     resolve_ball_ball_collision(balls[i], balls[j])
 
         # Check pocketed balls

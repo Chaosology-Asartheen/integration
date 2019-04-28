@@ -17,7 +17,8 @@ TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
 # SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573, 768  # Table fits entire screen
 
 # Use these for Macbook Pro 13" mirroring
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573 + 95, 768  # Table fits entire screen
+# HORIZONTAL: -8, VERTICAL: -20
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573 + 95, 768 + 10  # Table fits entire screen
 
 BACKGROUND_COLOR = (0, 0, 0)
 FOREST_GREEN = (1, 68, 33)
@@ -104,9 +105,6 @@ def draw_pool_table(screen, table: PoolTable):
 
 def draw_cue_stick(screen, table: PoolTable):
     if table.cue_stick_tip is None or table.cue_stick_back is None:
-        print('draw_cue_stick -- returning without drawing...')
-        print('draw_cue_stick -- returning without drawing...')
-        print('draw_cue_stick -- returning without drawing...')
         return
 
     brown_rgb = (165, 42, 42)
@@ -145,7 +143,7 @@ def draw_ball_lines(screen, table: PoolTable):
 
 def draw_pool_ball(screen, ball: PoolBall):
     # Draw a circle
-    draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=False)
+    draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=True)
 
 
 def gui_update(screen, table):
@@ -165,7 +163,6 @@ def gui_update(screen, table):
             cue_pos = table.cue_ball.pos
 
             table.cue_angle = get_angle(target_pos, cue_pos)
-            # print('AFTER SETTING cue_angle', table.cue_angle)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 sys.exit()

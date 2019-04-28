@@ -27,7 +27,7 @@ def run_hough_circles(image, output, aggres, cc, display=False):
     # ensure at least some circles were found
     if (circles is None) or (len(circles) <= 0):
         print("Can't find any circles")
-        return
+        return {}
 
     # convert the (x, y) coordinates and radius of the circles to integers
     circles = np.round(circles[0, :]).astype("int")
@@ -46,7 +46,7 @@ def run_hough_circles(image, output, aggres, cc, display=False):
     colors = []
 
     # debug print of all circles found
-    print(np.sort(circles, axis=0))
+    # print(np.sort(circles, axis=0))
 
     result2 = {}
 
@@ -91,12 +91,8 @@ def run_hough_circles(image, output, aggres, cc, display=False):
         result[k] = v.get_average()
 
     # show the output image, if prompted to by display flag
-    if display:
-        print(circles, colors)
-
-
-
-    print(result2)
+    # if display:
+    #     print(circles, colors)
     return result2
 
 def main(display):

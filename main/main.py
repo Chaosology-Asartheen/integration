@@ -84,7 +84,7 @@ def main():
         frame = get_resized_frame(frame)
         frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
         frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
-        frame_y1, frame_y2 = 77, 450
+        frame_y1, frame_y2 = 37, 414
         frame_x1, frame_x2 = 0, 800
         frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         max_x = frame.shape[1]
@@ -106,8 +106,6 @@ def main():
         for k, v in cv_balls.items():
             x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
             new_balls.append(CVBall(x, y, k))
-
-        print(new_balls)
 
         # Pass parameters to pool
         table.set_cv_balls(new_balls)

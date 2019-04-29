@@ -18,9 +18,9 @@ RGB_EPSILON = 30
 # target values, will hit within EPSILON
 RGB_TARGETS = {"white": (245, 245, 245),
             #"green": (10, 160, 160),
-            "purple": (30, 0, 90),
-            "orange": (240, 240, 0),
-            "black": (50, 20, 20)}
+            "purple": (50, 30, 50),
+            "orange": (240, 210, 20),
+            "black": (40, 20, 20)}
 
 # what to show when debugging
 DISPLAY_COLORS = {"white": (255, 255, 255),

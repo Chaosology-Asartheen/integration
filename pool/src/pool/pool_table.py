@@ -36,7 +36,7 @@ RACK_START_DIAMOND = 6
 
 # TODO: Get these from a config file
 BALL_MASS = 5
-BALL_RADIUS = 20
+BALL_RADIUS = 30
 
 # Physics properties
 # For now, taken from: https://billiards.colostate.edu/faq/physics/physical-properties/
@@ -44,7 +44,8 @@ BALL_TABLE_FRICTION_COEFFICIENT = 0.2
 BALL_BALL_FRICTION_RESTITUTION = 0.95
 BALL_WALL_FRICTION_RESTITUTION = 0.75
 
-BALL_TABLE_ACC = -0.0005
+# BALL_TABLE_ACC = -0.0005 # Decent value for demo
+BALL_TABLE_ACC = -0.0000001 # Debug value
 
 
 class PoolTable:
@@ -105,7 +106,7 @@ class PoolTable:
         :return: proper Coordinates for the pool table
         """
 
-        print("convert_cv_coords input: ({}, {})".format(cv_x, cv_y))
+        # print("convert_cv_coords input: ({}, {})".format(cv_x, cv_y))
 
         # Hard-coded offsets to align projector output
         if cv_x < 0.6:
@@ -436,6 +437,7 @@ class PoolTable:
         """
 
         assert all(param is not None for param in [v_start, struck_ball]), 'None param passed in'
+        assert self.cue_angle is not None, 'self.cue_angle is None'
 
         if v_start is None or v_start.get_magnitude() == 0.0:
             return
@@ -483,6 +485,10 @@ class PoolTable:
 
                 # Used to see if struck ball is hit to the left or right of object ball
                 struck_object_angle = get_angle(object_ball.pos, self.cue_ball.pos)
+
+                # Hotfix
+                if struck_object_angle is None:
+                    struck_object_angle = 0.0
 
                 if self.cue_angle % 360 == 0:  # Edge case when perfectly to the right
                     struck_deflect_angle = (struck_deflect_angle + 90) % 360

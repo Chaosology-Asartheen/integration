@@ -23,7 +23,7 @@ SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573 + 95, 768 +
 BACKGROUND_COLOR = (0, 0, 0)
 FOREST_GREEN = (1, 68, 33)
 BLACK = (0,0,0)
-TABLE_COLOR = FOREST_GREEN
+TABLE_COLOR = BLACK
 CUE_STICK_LINE_COLOR = (255, 255, 255)
 POCKET_COLOR = (255, 0, 0)
 """
@@ -121,29 +121,36 @@ def draw_cue_stick(screen, table: PoolTable):
 
 
 
-
-def draw_ball_lines(screen, table: PoolTable):
+def draw_ball_lines(screen, table: PoolTable, white_lines=False):
     if table.ghost_ball_lines is {}:
         return
 
     for ball, ghost_lines in table.ghost_ball_lines.items():
+        if white_lines:
+            color = (255, 255, 255)
+        else:
+            color = ball.ball_type.color
+
         # Draw traveling line
         travel_line_start, travel_line_end = ball.pos, ghost_lines[0]
-        draw_line(screen, travel_line_start, travel_line_end, ball.ball_type.color)
+        draw_line(screen, travel_line_start, travel_line_end, color)
 
         # Draw ghost ball start
-        draw_circle(screen, travel_line_end, ball.radius, ball.ball_type.color)
+        draw_circle(screen, travel_line_end, ball.radius, color)
 
         # Draw ghost line
         ghost_line_start, ghost_line_end = ghost_lines[0], ghost_lines[1]
-        draw_line(screen, ghost_line_start, ghost_line_end, ball.ball_type.color)
+        draw_line(screen, ghost_line_start, ghost_line_end, color)
 
         # Draw ghost ball end
-        draw_circle(screen, ghost_line_end, ball.radius, ball.ball_type.color)
+        draw_circle(screen, ghost_line_end, ball.radius, color)
 
 def draw_pool_ball(screen, ball: PoolBall):
     # Draw a circle
-    draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=True)
+    # draw_circle(screen, ball.pos, ball.radius, ball.ball_type.color, filled=False)
+
+    # DEBUG: Make all the balls white for now
+    draw_circle(screen, ball.pos, ball.radius, (255, 255, 255), filled=False)
 
 
 def gui_update(screen, table):
@@ -195,7 +202,7 @@ def gui_update(screen, table):
 
     # Draw pool table
     draw_pool_table(screen, table)
-    draw_ball_lines(screen, table)
+    draw_ball_lines(screen, table, white_lines=True)
 
     # Draw all pool balls
     for ball in balls:

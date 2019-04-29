@@ -11,9 +11,12 @@ import sys
 # sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
+from cv.cv_ball import CVBall
 from cv.modules.average_queue import AverageQueue
 from cv.modules.color_classification import ColorClassification
+from cv.hsv_filtering import get_resized_frame, norm_coordinates
 import cv.constants as constants
+
 
 def run_hough_circles(image, output, aggres, cc, display=False):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -59,19 +62,18 @@ def run_hough_circles(image, output, aggres, cc, display=False):
         result2[color_str] = (x, y)
 
         if not (color_str) in aggres:
-            aggres[color_str] = AverageQueue(limit=5)
+            aggres[color_str] = AverageQueue(limit=10)
 
         aggres[color_str].add(x, y)
-
 
         # else:
         # print("Can't find a bucket for this", x, y, color_str)
         rgb = cc.get_rgb_value(color_str)
         bgr = rgb[2],rgb[1],rgb[0]
-        cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2),bgr, -1)
-        cv2.rectangle(output, (x - 3, y - 3), (x + 3, y + 3),(0,0,0), 1)
+        # cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2),bgr, -1)
+        # cv2.rectangle(output, (x - 3, y - 3), (x + 3, y + 3),(0,0,0), 1)
 
-        if False: # change me to stop using this average queue
+        if True: # change me to stop using this average queue
             ave_x, ave_y = aggres[color_str].get_average()
             ave_x = int(ave_x)
             ave_y = int(ave_y)
@@ -79,11 +81,11 @@ def run_hough_circles(image, output, aggres, cc, display=False):
             # draw the circle in the output image, then draw a rectangle
             # corresponding to the center of the circle
             # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
-            cv2.rectangle(output, (ave_x - 2, ave_y - 2), (ave_x + 2, ave_y + 2), (20,255,57), -1)
+            # cv2.rectangle(output, (ave_x - 2, ave_y - 2), (ave_x + 2, ave_y + 2), (20,255,57), -1)
             # cv2.rectangle(output, (x - 1, y - 1), (x + 1, y + 1), color_val, -1)
 
-    for ((x, y), (w, z)) in constants.ignore_regions:
-        cv2.rectangle(output, (x, y), (w, z), (255, 255, 255), 1)
+    # for ((x, y), (w, z)) in constants.ignore_regions:
+    #     cv2.rectangle(output, (x, y), (w, z), (255, 255, 255), 1)
 
 
     result = {}
@@ -93,28 +95,59 @@ def run_hough_circles(image, output, aggres, cc, display=False):
     # show the output image, if prompted to by display flag
     # if display:
     #     print(circles, colors)
-    return result2
+    # for k in sorted(aggres.keys()):
+    #     print(k, aggres[k].get_average(), result2[k])
+
+    return result
 
 def main(display):
     cap = cv2.VideoCapture(1)
 
     aggres = {}
-    cc = ColorClassification(epsilon=constants.RGB_EPSILON, threshold=4)
+    cc = ColorClassification(epsilon=20, threshold=6)
     # identification colors
     cc.fill_color_ranges(d=constants.RGB_TARGETS)
     # display colors
     cc.fill_rgb_lookup(d=constants.DISPLAY_COLORS)
 
+    count = 0
+    times = []
+    curr = time.time()
     while True:
+        if count < 100:
+            new_time = time.time()
+            times.append((new_time - curr) * 1000)
+            curr = new_time
+            count += 1
+            print(count)
+        else:
+            import statistics
+            print('LAST 100 AVG: ', statistics.mean(times))
+
         ret, frame = cap.read()
+        frame = get_resized_frame(frame)
+        frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
+        frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
+        frame_y1, frame_y2 = 25, 400
+        frame_x1, frame_x2 = 11, 800
+        frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         frame_height = frame.shape[0]
         frame_width = frame.shape[1]
-        resize_frame_height = int(frame_height / frame_width * constants.RESIZE_FRAME_WIDTH)
-        frame = cv2.resize(frame, (constants.RESIZE_FRAME_WIDTH, resize_frame_height))
         output = frame.copy()
         cv_balls = run_hough_circles(frame, output,aggres, cc, display=display)
-        cv2.imshow("output", output)
-        res = cv2.waitKey(0)
+        norm_balls = []
+        for k in sorted(cv_balls.keys()):
+            v = cv_balls[k]
+            x,y = norm_coordinates(v[0],v[1],0,frame_width,0,frame_height)
+            norm_balls.append(CVBall(x, y, k))
+        print("*******************************************")
+        print(norm_balls)
+        # cv2.imshow("output", output)
+        # res = cv2.waitKey(0)
+        # print(res)
+        # if res != 27:
+        #     aggres = {}
+        # print()
 
 if __name__ == "__main__":
-    main(display=True)
+    main(display=False)

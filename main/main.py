@@ -15,7 +15,7 @@ sys.path.append('/Users/skim/ws/500')
 sys.path.append('/Users/skim/ws/500/cv')
 sys.path.append('/Users/skim/ws/500/pool')
 
-from cv.hsv_filtering import find_cuestick, get_resized_frame, norm_coordinates
+from cv.hsv_filtering import find_cuestick, get_resized_frame, norm_coordinates, run_hsv_filtering
 from cv.hough_lines import compute_lines
 from cv.cv_ball import CVBall
 from cv.cv_cue_stick import CVCueStick
@@ -48,7 +48,7 @@ def gui_main():
         # table.place_cv_balls(None)
 
         # Cue stick on top of cue ball
-        table.set_cv_cue_stick(CVCueStick(tip=(0.3, 0.6), back=(0.1, 0.1)))
+        # table.set_cv_cue_stick(CVCueStick(tip=(0.3, 0.6), back=(0.1, 0.1)))
 
         # Striking would hit cue ball
         # table.set_cv_cue_stick(CVCueStick(tip=(0.175, 0.3)back=, (0.1, 0.1)))
@@ -72,11 +72,24 @@ def main():
     cap = cv2.VideoCapture(1)
 
     aggres = {}
-    cc = ColorClassification(epsilon=30, threshold=4)
+    # cc = ColorClassification(epsilon=30, threshold=4)
+    cc = ColorClassification(epsilon=20, threshold=6)
     cc.fill_color_ranges(d=constants.RGB_TARGETS)
     cc.fill_rgb_lookup(d=constants.DISPLAY_COLORS)
 
+    count = 0
+    times = []
+    curr = time.time()
     while True:
+        if count < 100:
+            new_time = time.time()
+            times.append((new_time - curr) * 1000)
+            curr = new_time
+            count += 1
+            print(count)
+        else:
+            import statistics
+            print('LAST 100 AVG: ', statistics.mean(times))
         # time.sleep(.5)
 
         # resize frame according to constants
@@ -84,8 +97,8 @@ def main():
         frame = get_resized_frame(frame)
         frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
         frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
-        frame_y1, frame_y2 = 37, 414
-        frame_x1, frame_x2 = 0, 800
+        frame_y1, frame_y2 = 25, 380
+        frame_x1, frame_x2 = 17, 800
         frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         max_x = frame.shape[1]
         max_y = frame.shape[0]
@@ -93,7 +106,9 @@ def main():
         output = frame.copy()
 
         # CV
-        cv_balls = run_hough_circles(frame, output, aggres, cc, display=True)
+        # cv_balls = run_hough_circles(frame, output, aggres, cc, display=True)
+        cv_balls = run_hsv_filtering(frame)
+
         cuestick_res = find_cuestick(frame, output)
         norm_mid_point = None
         if cuestick_res:
@@ -102,11 +117,17 @@ def main():
         if cuestick_tip_res:
             cue_tip_x, cue_tip_y = cuestick_tip_res
 
-        new_balls = []
-        for k, v in cv_balls.items():
-            x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
-            new_balls.append(CVBall(x, y, k))
+        # HOUGH CIRCLES WAY
+        # new_balls = []
+        # for k in sorted(cv_balls.keys()):
+        #     v = cv_balls[k]
+        #     x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
+        #     new_balls.append(CVBall(x, y, k))
 
+        # hSV filtering
+        new_balls = cv_balls
+
+        print(new_balls)
         # Pass parameters to pool
         table.set_cv_balls(new_balls)
 

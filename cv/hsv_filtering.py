@@ -4,17 +4,22 @@ import cv2
 import hough_lines
 import numpy as np
 import imutils
+import time
 from cv_ball import CVBall
 from datetime import datetime
+
+from modules.average_queue import AverageQueue
 
 cue_lower = np.array([180,240,240]) #cue ball, using rgb as bounds
 cue_upper = np.array([255,255,255])
 
 # Commandline arguments
-DISPLAY = True
+DISPLAY = False
 DISPLAY_INTERMEDIATE = False
 DISPLAY_HOUGH = False
 USING_CAMERA = True
+
+aggres = {}
 
 def wait_escape():
     while(1):
@@ -36,7 +41,7 @@ def find_ball(ball, hsv, frame, cv_balls):
     table_pixel_width = frame.shape[0]
 
     # Threshold the HSV image to get only ball colors
-    print("Looking at " + ball.str_rep)
+    # print("Looking at " + ball.str_rep)
     # White and Black balls use RGB filtering instead of HSV filtering
     if ball.str_rep == "white" or ball.str_rep == "black":
         mask = cv2.inRange(frame, ball.lower_bound, ball.upper_bound)
@@ -80,27 +85,33 @@ def find_ball(ball, hsv, frame, cv_balls):
         # Check that table coordinates are within right bounds (ball is indeed on the table)
         if (constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-constants.BALL_RADIUS and
             constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-constants.BALL_RADIUS):
-
+            # print("cA={}, min={} max={}".format(cv2.contourArea(c), min_contour_area, max_contour_area))
             # Ensure that contour area is correct for a ball
             if (min_contour_area < cv2.contourArea(c) < max_contour_area):
 
                 if (ball.str_rep != "white" or (2*constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-2*constants.BALL_RADIUS and
                     2*constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-2*constants.BALL_RADIUS)):
 
-                    cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep))
+                    # if not (ball.str_rep in aggres):
+                    #     aggres[ball.str_rep] = AverageQueue(limit=10)
+                    # aggres[ball.str_rep].add(norm_x, norm_y)
+                    # ave_x, ave_y = aggres[ball.str_rep].get_average()
+                    # cv_balls.append(CVBall(ave_x, ave_y, ball.str_rep)) # Avg queue
+                    cv_balls.append(CVBall(norm_x, norm_y, ball.str_rep)) # W/out avg queue
                     if DISPLAY:
                         # draw the circle and midpoint on the frame
                         cv2.circle(frame, (int(x), int(y)), int(radius), ball.bgr, 2)
                         cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
             # Edge case for 9, yellow stripe ball
             elif (ball.str_rep == "yellow" and min_yellow_contour_area < cv2.contourArea(c) < min_contour_area):
-                print("yellow stripe")
-
-                cv_balls.append(CVBall(norm_x, norm_y, "nine"))
-                if DISPLAY:
-                    # draw the circle and midpoint on the frame
-                    cv2.circle(frame, (int(x), int(y)), int(radius), (0,153,153), 2)
-                    cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
+                raise Exception("DONT GO HERE")
+                # print("yellow stripe")
+                #
+                # cv_balls.append(CVBall(norm_x, norm_y, "nine"))
+                # if DISPLAY:
+                #     # draw the circle and midpoint on the frame
+                #     cv2.circle(frame, (int(x), int(y)), int(radius), (0,153,153), 2)
+                #     cv2.circle(frame, (int(x), int(y)), 2, (0, 255, 0), -1)
 
 def find_balls(balls, hsv_img, frame):
     cv_balls = []
@@ -157,17 +168,40 @@ def get_resized_frame(frame):
     frame = cv2.resize(frame, (constants.RESIZE_FRAME_WIDTH, resize_frame_height))
     return frame
 
+def run_hsv_filtering(frame):
+    ball_list = ["white","orange","purple","black"]
+    # "white","orange","purple","black"
+    #
+    balls = init_ball_info(ball_list)
+    hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    cv_balls = find_balls(balls, hsv_img, frame)
+    return cv_balls
 
 def main():
     # show_edges()
-    ball_list = ["white","blue","purple","green","brown"]
+    ball_list = ["white","orange","purple","black"]
+    # "white","orange","purple","black"
+    #
     balls = init_ball_info(ball_list)
 
     if USING_CAMERA:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
         # cap.set(cv2.CV_CAP_PROP_BRIGHTNESS, 50)
+
+    count = 0
+    times = []
+    curr = time.time()
     running = True
     while running:
+        if count < 100:
+            new_time = time.time()
+            times.append((new_time - curr) * 1000)
+            curr = new_time
+            count += 1
+            print(count)
+        else:
+            import statistics
+            print('LAST 100 AVG: ', statistics.mean(times))
         frame = None
 
         # Take each frame
@@ -181,7 +215,12 @@ def main():
         if frame is None:
             print("no frame")
             continue
-        frame = getResizedFrame(frame)
+        frame = get_resized_frame(frame)
+        frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
+        frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
+        frame_y1, frame_y2 = 25, 400
+        frame_x1, frame_x2 = 11, 800
+        frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
 
         if DISPLAY_INTERMEDIATE:
             # ret, frame = cap.read()
@@ -201,14 +240,15 @@ def main():
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         cv_balls = find_balls(balls, hsv_img, frame)
 
+        print("*******************************")
         print(cv_balls)
-        print("cuestick " + str(find_cuestick(hsv_img, frame)))
+        # print("cuestick " + str(find_cuestick(hsv_img, frame)))
 
         # Pass parameters to pool
 
-        if DISPLAY:
-            cv2.imshow('frame', frame)
-            wait_escape()
+        # if DISPLAY:
+        #     cv2.imshow('frame', frame)
+        #     wait_escape()
 
     # When everything done, release the capture
     if USING_CAMERA:
@@ -216,5 +256,5 @@ def main():
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    DISPLAY = True
+    DISPLAY = False
     main()

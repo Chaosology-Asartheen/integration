@@ -18,15 +18,18 @@ DEBUG = False
 
 # TODO: Requires tuning
 # Min/max contour area for the cuestick tip
-MIN_TIP_AREA = 300
+MIN_TIP_AREA = 170
 MAX_TIP_AREA = 550
 # Min/max contour area for the cuestick length
-MIN_CUESTICK_AREA = 750
-MAX_CUESTICK_AREA = 4500
+MIN_CUESTICK_AREA = 800
+MAX_CUESTICK_AREA = 6000
 
 # White cue stick rgb bounds
 CUE_LOWER = np.array([230,230,230]) #cue stick, using rgb as bounds
 CUE_UPPER = np.array([255,255,255])
+
+CUE_TIP_LOWER = np.array([0,150,180])
+CUE_TIP_UPPER = np.array([4,255,255])
 
 # Threshold for cuestick area being either a ball or cuestick
 IS_CIRCLE_THRESHOLD = 30
@@ -48,6 +51,7 @@ def find_cuestick(frame, output):
     table_pixel_length = frame.shape[1]
     table_pixel_width = frame.shape[0]
     mask = cv2.inRange(frame, CUE_LOWER, CUE_UPPER)
+    mask = cv2.dilate(mask, None, iterations=1)
 
     if DISPLAY_INTERMEDIATE:
         # Bitwise-AND mask and original image
@@ -61,7 +65,7 @@ def find_cuestick(frame, output):
     cnts = imutils.grab_contours(cnts)
     for cnt in cnts:
         contour_area = cv2.contourArea(cnt)
-        if DEBUG and contour_area > table_pixel_width * 1.5:
+        if DEBUG and contour_area > table_pixel_width * 1:
             print(str(contour_area) + " min: " + str(MIN_CUESTICK_AREA) + " max: " + str(MAX_CUESTICK_AREA))
 
         # Only use contour within predetermined min/max cuestick contour area
@@ -106,7 +110,7 @@ def find_cuestick_tip(frame, output):
     # Convert img to hsv colorspace
     hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # Generating mask based on lower/upper red values for HSV filtering
-    mask = cv2.inRange(hsv_img, ball_initializer.LOWER_RED, ball_initializer.UPPER_RED)
+    mask = cv2.inRange(hsv_img, CUE_TIP_LOWER, CUE_TIP_UPPER)
     mask = cv2.dilate(mask, None, iterations=4)
 
     res = cv2.bitwise_and(frame,frame, mask=mask)
@@ -186,18 +190,18 @@ if __name__ == "__main__":
         # Commented lines below are for static images
         # filename = "/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/test_imgs/2.jpg"
         # frame = cv2.imread(filename)
-
-        if frame is None:
-            if DEBUG:
-                print("no frame")
-            continue
+        
         # cv2.imwrite("red.png", frame)
         frame = hsv_filtering.get_resized_frame(frame)
+        frame_y1, frame_y2 = 37, 414
+        frame_x1, frame_x2 = 0, 800
+        frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         output = frame.copy()
         cuestick_tip_res = None
         cuestick_res = None
         cuestick_res = find_cuestick(frame, output)
-        norm_mid_point, norm_left_point, norm_right_point = cuestick_res
+        if cuestick_res:
+            norm_mid_point, norm_left_point, norm_right_point = cuestick_res
         cuestick_tip_res = find_cuestick_tip(frame, output)
         if cuestick_tip_res:
             cue_tip_x, cue_tip_y = cuestick_tip_res

@@ -243,9 +243,6 @@ def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) 
 
 
 def get_point_on_line_distance_from_point(line_start, line_end, point, distance) -> Coordinates:
-    print('get_point_on_line_distance_from_point called with: line_start={}, line_end={}, point={}, distance={}'.format(
-        line_start, line_end, point, distance
-    ))
     a_side = distance
     c_side = get_distance(line_start, point)
 

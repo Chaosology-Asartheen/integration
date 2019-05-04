@@ -132,64 +132,46 @@ class CoordinatesTest(unittest.TestCase):
         angle = 0
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(100, 50)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 45
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(100, 100)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 90
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(50, 100)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 135
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(0, 100)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 180
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(0, 50)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 225
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(0, 0)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 270
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(50, 0)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 315
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(100, 0)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
         angle = 360
         result = get_line_endpoint_within_box(p1, angle, nw, se)
         expected = Coordinates(100, 50)
-        # DEBUG
-        print('For angle {}, got endpoint: {}'.format(angle, result))
         self.assertCoordinatesAlmostEqual(result, expected)
 
     def test_get_parallel_line(self):

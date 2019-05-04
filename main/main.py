@@ -7,6 +7,7 @@ import time
 
 # sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration')
 # sys.path.append('/Users/harryxu/Desktop/Harrys_Stuff/School/Carnegie_Mellon_Undergrad/08_Spring_2019/18500/integration/cv')
+
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration')
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/cv')
 sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/pool')
@@ -24,6 +25,8 @@ from cv.modules.color_classification import ColorClassification
 from cv.cue_stick_detection import find_cuestick, find_cuestick_tip
 import cv.constants as constants
 
+from speed_detection.speed_detection import SpeedDetection
+
 from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_WIDTH, TABLE_LENGTH, gui_update, gui_init
 from pool.src.pool.pool_table import PoolTable
 
@@ -36,9 +39,11 @@ def gui_main():
 
     # Create pool table
     # TABLE_LENGTH, TABLE_WIDTH
+
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
-    table = PoolTable(nw, se)
+    speed = SpeedDetection(gui_mode=True)
+    table = PoolTable(nw, se, speed)
 
     while 1:
         # table.place_cv_balls(new_balls)
@@ -56,17 +61,20 @@ def gui_main():
         # Striking would miss cue ball
         # table.set_cv_cue_stick(CVCueStick(tip=(0.5, 0.3), back=(0.1, 0.1)))
 
-        gui_update(screen, table)
+        gui_update(screen, table, speed)
 
 
 def main():
     # Initialize GUI
     screen = gui_init()
 
+    # Initialize SpeedDetection module
+    speed_module = SpeedDetection()
+
     # Initialize pool table here
     nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
-    table = PoolTable(nw, se)
+    table = PoolTable(nw, se, speed_module)
 
     # Initialize CV info
     cap = cv2.VideoCapture(1)
@@ -126,13 +134,15 @@ def main():
 
         # hSV filtering
         new_balls = cv_balls
-
         print(new_balls)
-        # Pass parameters to pool
+
+        # Pass parameters to pool, and speed module
         table.set_cv_balls(new_balls)
+        speed_module.set_cv_balls(new_balls)
 
         cv_cue_stick = CVCueStick(tip=cuestick_tip_res, back=norm_mid_point)
         table.set_cv_cue_stick(cv_cue_stick)
+        speed_module.set_cv_cue_stick(cv_cue_stick)
 
         cv2.imshow('output', output)
 

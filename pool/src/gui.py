@@ -4,6 +4,7 @@ import numpy as np
 import pygame
 import pygame.gfxdraw
 
+from speed_detection.speed_detection import SpeedDetection
 from pool.src.physics.coordinates import Coordinates
 from pool.src.physics.utility import get_angle
 from pool.src.physics.vector import Vector
@@ -153,7 +154,7 @@ def draw_pool_ball(screen, ball: PoolBall):
     draw_circle(screen, ball.pos, ball.radius, (255, 255, 255), filled=False)
 
 
-def gui_update(screen, table):
+def gui_update(screen, table, speed: SpeedDetection):
     # Get just the list of balls to iterate easily
     balls = list(table.balls.values())
 
@@ -194,7 +195,7 @@ def gui_update(screen, table):
                 # Create pool table
                 nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
                 se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
-                table = PoolTable(nw, se)
+                table = PoolTable(nw, se, speed)
 
 
     # Table time step

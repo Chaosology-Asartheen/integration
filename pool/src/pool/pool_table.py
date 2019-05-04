@@ -1,8 +1,10 @@
 import sys
+from collections import deque
 from typing import List
 
 import numpy as np
 
+from speed_detection.speed_detection import SpeedDetection
 from cv.cv_cue_stick import CVCueStick
 from pool.src.physics.collisions import check_ball_wall_collision, resolve_ball_wall_collision, \
     check_ball_ball_collision, resolve_ball_ball_collision
@@ -44,12 +46,12 @@ BALL_TABLE_FRICTION_COEFFICIENT = 0.2
 BALL_BALL_FRICTION_RESTITUTION = 0.95
 BALL_WALL_FRICTION_RESTITUTION = 0.75
 
-# BALL_TABLE_ACC = -0.0005 # Decent value for demo
-BALL_TABLE_ACC = -0.0000001 # Debug value
+BALL_TABLE_ACC = -0.0005 # Decent value for demo
+# BALL_TABLE_ACC = -0.0000001 # Debug value
 
 
 class PoolTable:
-    def __init__(self, nw, se, cv_ball_locations=None, cv_cue_points=None):
+    def __init__(self, nw, se, speed_module: SpeedDetection, cv_ball_locations=None, cv_cue_points=None):
         # Table dimensions
         self.nw = nw
         self.se = se
@@ -61,6 +63,9 @@ class PoolTable:
 
         self.length = self.right - self.left
         self.width = self.top - self.bottom
+
+        # Module to get cue stick speed and if cue ball is moving
+        self.speed_module = speed_module
 
         # Pool table balls
         if cv_ball_locations is None:
@@ -92,11 +97,6 @@ class PoolTable:
         self.hole_centers = self.get_pockets()
         self.hole_radius = 2.25 * self.cue_ball.radius
 
-        self.corner_pocket_width = 5
-        self.side_pocket_width = 5
-
-        self.corner_pocket_angle = 5
-        self.side_pocket_angle = 5
 
     def convert_cv_coords(self, cv_x, cv_y) -> Coordinates:
         """
@@ -187,7 +187,7 @@ class PoolTable:
         :return:
         """
 
-        if cv_cue_stick is None or cv_cue_stick.tip is None or cv_cue_stick.back is None:
+        if cv_cue_stick is None or cv_cue_stick.tip is None:
             self.cue_stick_tip = self.cue_stick_back = None
             self.floating_cue_stick = False
             self.cue_angle = None
@@ -212,8 +212,6 @@ class PoolTable:
         else:
             self.floating_cue_stick = True
             self.floating_cue_stick_line_end = cue_stick_line_extended_end
-
-
 
 
     def reset_cue_ball(self):
@@ -388,17 +386,6 @@ class PoolTable:
         return (check_ray_circle_intersection(top_start, top_end, ball_b.pos, ball_b.radius) or
                 check_ray_circle_intersection(bot_start, bot_end, ball_b.pos, ball_b.radius))
 
-    @staticmethod
-    def get_angle_after_ball_collision(ball_a, angle, ball_b):
-        """
-
-        :param ball_a: Moving ball
-        :param angle: Angle that ball A collided into ball B
-        :param ball_b: Static ball
-        :return:
-        """
-        # TODO: Refactor ball_hit angle stuff here... or just delete this
-        return
 
     @staticmethod
     def check_enough_speed(start: Coordinates, end: Coordinates, vel: Vector) -> (float, float):
@@ -572,7 +559,6 @@ class PoolTable:
 
             cue_line_end
             cue_deflect_line_end
-
         """
 
         # If cue ball is currently pocketed OR if cue stick not lined up with cue ball, skip
@@ -584,7 +570,11 @@ class PoolTable:
         self.ghost_ball_lines = {}
 
         # First, strike the cue ball
-        self.cue_ball_vel = Vector(np.cos(np.radians(self.cue_angle)), np.sin(np.radians(self.cue_angle)))
+        # speed = 1.0
+        speed = self.speed_module.get_cue_stick_speed() # FIXME: New, probably buggy
+        print('PoolTable - from SpeedDetection, got cue stick speed: {}'.format(speed))
+        self.cue_ball_vel = Vector(speed * np.cos(np.radians(self.cue_angle)),
+                                   speed * np.sin(np.radians(self.cue_angle)))
         cue_ghost_start, cue_ghost_end, collided_ball, collided_ball_vel = self.ball_hit(self.cue_ball_vel,
                                                                                          self.cue_ball)
 
@@ -608,6 +598,11 @@ class PoolTable:
         return
 
     def time_step(self):
+        # Pause everything if cue ball is moving
+        if self.speed_module.get_cue_ball_is_moving():
+            print('PoolTable PAUSED - from SpeedDetection says cue ball is moving')
+            return
+
         balls = list(self.balls.values())
 
         # Update ball positions

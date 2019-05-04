@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import os
 import pygame
 import pygame.gfxdraw
 
@@ -20,6 +21,10 @@ TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
 # Use these for Macbook Pro 13" mirroring
 # HORIZONTAL: -8, VERTICAL: -20
 SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573 + 95, 768 + 10  # Table fits entire screen
+
+# Initialize pygame window to overlay on top of pool table
+SCREEN_X_OFFSET = 3000 # This one just needs to be above 2000 because of projector position
+SCREEN_Y_OFFSET = 175
 
 BACKGROUND_COLOR = (0, 0, 0)
 FOREST_GREEN = (1, 68, 33)
@@ -69,10 +74,11 @@ PyGame functions.
 
 def gui_init():
     """
-    Start the gui.
+    Start the gui at the offsets specified.
 
     :return: pygame screen to use for all gui functions
     """
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (SCREEN_X_OFFSET,SCREEN_Y_OFFSET)
     pygame.init()
     return pygame.display.set_mode(SCREEN_DIMENSIONS)
 

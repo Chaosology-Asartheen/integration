@@ -27,9 +27,10 @@ import cv.constants as constants
 
 from speed_detection.speed_detection import SpeedDetection
 
-from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_WIDTH, TABLE_LENGTH, gui_update, gui_init
+from pool.src.gui import coords_from_pygame, TABLE_OFFSET_X, TABLE_OFFSET_Y, HEIGHT, TABLE_WIDTH, TABLE_LENGTH, gui_update, gui_init, clear_screen
 from pool.src.pool.pool_table import PoolTable
 
+INIT_SLEEP = 3
 
 def gui_main():
     """
@@ -67,6 +68,7 @@ def gui_main():
 def main():
     # Initialize GUI
     screen = gui_init()
+    clear_screen(screen)
 
     # Initialize SpeedDetection module
     speed_module = SpeedDetection()
@@ -76,8 +78,9 @@ def main():
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
     table = PoolTable(nw, se, speed_module)
 
+    time.sleep(INIT_SLEEP)
     # Initialize CV info
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
     aggres = {}
     # cc = ColorClassification(epsilon=30, threshold=4)

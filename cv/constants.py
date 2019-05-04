@@ -31,7 +31,7 @@ DISPLAY_COLORS = {"white": (255, 255, 255),
 
 # pockets, usually
 ignore_regions = [((0, 0), (60, 40)), # top left
-                  ((370, 0), (433, 30)), # top middle
+                  ((360, 0), (433, 30)), # top middle
                   ((750, 0), (800, 50)), # top right
                   ((0, 325), (50, 448)), # bottom left
                   ((360, 346), (426, 450)), # bottom middle

@@ -187,7 +187,7 @@ class PoolTable:
         :return:
         """
 
-        if cv_cue_stick is None or cv_cue_stick.tip is None:
+        if cv_cue_stick is None or cv_cue_stick.tip is None or cv_cue_stick.back is None:
             self.cue_stick_tip = self.cue_stick_back = None
             self.floating_cue_stick = False
             self.cue_angle = None
@@ -427,7 +427,9 @@ class PoolTable:
         assert self.cue_angle is not None, 'self.cue_angle is None'
 
         if v_start is None or v_start.get_magnitude() == 0.0:
-            return
+            # For some reason, speed was 0, so just make it 1
+            v_start = Vector(1.0 * np.cos(np.radians(self.cue_angle)),
+                             1.0 * np.sin(np.radians(self.cue_angle)))
 
         # Return values
         ghost_start, ghost_end, collided_ball, collided_vel = None, None, None, None
@@ -572,11 +574,11 @@ class PoolTable:
         # First, strike the cue ball
         # speed = 1.0
         speed = self.speed_module.get_cue_stick_speed() # FIXME: New, probably buggy
-        print('PoolTable - from SpeedDetection, got cue stick speed: {}'.format(speed))
+        print('PoolTable.setLines() - from SpeedDetection, got cue stick speed: {}'.format(speed))
         self.cue_ball_vel = Vector(speed * np.cos(np.radians(self.cue_angle)),
                                    speed * np.sin(np.radians(self.cue_angle)))
-        cue_ghost_start, cue_ghost_end, collided_ball, collided_ball_vel = self.ball_hit(self.cue_ball_vel,
-                                                                                         self.cue_ball)
+        print(self.cue_ball)
+        cue_ghost_start, cue_ghost_end, collided_ball, collided_ball_vel = self.ball_hit(self.cue_ball_vel, self.cue_ball)
 
         # Update map for cue ball
         self.ghost_ball_lines[self.cue_ball] = (cue_ghost_start, cue_ghost_end)
@@ -598,10 +600,16 @@ class PoolTable:
         return
 
     def time_step(self):
+        # PURELY DEBUGGING #
+        print('PoolTable PAUSED - from SpeedDetection says cue stick speed is',
+                self.speed_module.get_cue_stick_speed())
+        # PURELY DEBUGGING #
+
         # Pause everything if cue ball is moving
         if self.speed_module.get_cue_ball_is_moving():
             print('PoolTable PAUSED - from SpeedDetection says cue ball is moving')
             return
+
 
         balls = list(self.balls.values())
 

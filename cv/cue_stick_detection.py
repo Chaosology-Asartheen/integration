@@ -12,6 +12,8 @@ import ball_initializer
 import constants
 import hsv_filtering
 
+from modules.average_queue import AverageQueue
+
 # Commandline global arguments
 DISPLAY_INTERMEDIATE = False
 DEBUG = False
@@ -39,6 +41,15 @@ IS_CIRCLE_THRESHOLD = 30
 DIST_CUTOFF = 1
 DIST_MAX = 15
 
+cuestick_aggres = {}
+
+def in_range(coord):
+    x, y = coord[0], coord[1]
+    for ((ux, uy), (lx, ly)) in constants.ignore_regions:
+        if (ux <= x <= lx) and (uy <= y <= ly):
+            return False
+    return True
+
 """find_cuestick utilizes RGB filtering to detect the cue stick position and angle.
 Args:
     frame: image we want to perform cuestick detection on
@@ -63,16 +74,35 @@ def find_cuestick(frame, output):
     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
+
+    # # convert the (x, y) coordinates and radius of the cnts to integers
+    # cnts = np.round(cnts[0, :]).astype("int")
+    #
+    # cnts = list(cnts)
+    #
+    # cnts = list(filter(lambda x: in_range(x), cnts))
+    if DEBUG:
+        print("**************************************************")
     for cnt in cnts:
         contour_area = cv2.contourArea(cnt)
-        if DEBUG and contour_area > table_pixel_width * 1:
+        (min_circle_pos, circle_radius) = cv2.minEnclosingCircle(cnt)
+        if DEBUG and contour_area > 500 and not in_range(min_circle_pos):
             print(str(contour_area) + " min: " + str(MIN_CUESTICK_AREA) + " max: " + str(MAX_CUESTICK_AREA))
 
         # Only use contour within predetermined min/max cuestick contour area
         if (MIN_CUESTICK_AREA < contour_area < MAX_CUESTICK_AREA):
+
             rows,cols = frame.shape[:2]
             # OpenCV's line-fitting algorithm
             [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
+
+            if not in_range(min_circle_pos):
+                continue
+
+            if not in_range((x,y)):
+                continue
+            if DEBUG:
+                print("Good cuestick area={}".format(contour_area))
             # y coordinates of leftmost point on frame and rightmost point
             left_y = int((-x*vy/vx) + y)
             right_y = int(((cols-x)*vy/vx)+y)
@@ -90,6 +120,18 @@ def find_cuestick(frame, output):
             except:
                 print("mid {} left {} right {}".format(mid_point, left_point, right_point))
 
+            if len(cuestick_aggres) == 0:
+                cuestick_aggres['mid'] = AverageQueue()
+                cuestick_aggres['left'] = AverageQueue()
+                cuestick_aggres['right'] = AverageQueue()
+
+            cuestick_aggres['mid'].add(mid_point[0], mid_point[1])
+            cuestick_aggres['left'].add(left_point[0], left_point[1])
+            cuestick_aggres['right'].add(right_point[0], right_point[1])
+
+            mid_point = cuestick_aggres['mid'].get_average()
+            left_point = cuestick_aggres['left'].get_average()
+            right_point = cuestick_aggres['right'].get_average()
 
             # Normalize coordinates for software backend
             norm_mid_point = hsv_filtering.norm_coordinates(mid_point[0], mid_point[1], 0, table_pixel_length, 0, table_pixel_width)
@@ -190,7 +232,7 @@ if __name__ == "__main__":
         # Commented lines below are for static images
         # filename = "/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/test_imgs/2.jpg"
         # frame = cv2.imread(filename)
-        
+
         # cv2.imwrite("red.png", frame)
         frame = hsv_filtering.get_resized_frame(frame)
         frame_y1, frame_y2 = 37, 414
@@ -202,7 +244,7 @@ if __name__ == "__main__":
         cuestick_res = find_cuestick(frame, output)
         if cuestick_res:
             norm_mid_point, norm_left_point, norm_right_point = cuestick_res
-        cuestick_tip_res = find_cuestick_tip(frame, output)
+        # cuestick_tip_res = find_cuestick_tip(frame, output)
         if cuestick_tip_res:
             cue_tip_x, cue_tip_y = cuestick_tip_res
 
@@ -210,8 +252,6 @@ if __name__ == "__main__":
             norm_mid_point, norm_left_point, norm_right_point = cuestick_res
             cue_tip_x, cue_tip_y = cuestick_tip_res
             cv2.line(output,(int(cue_tip_x),int(cue_tip_y)),(int(norm_mid_point[0]),int(norm_mid_point[1])),(0,0,0),2)
-        else:
-            print("************************************************************")
         #     speed = compute_cuestick_speed(cuestick_tip_res, cuestick_past_pos)
         #     # print(speed)
         # cuestick_past_pos = cuestick_tip_res

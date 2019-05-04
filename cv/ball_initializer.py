@@ -44,7 +44,7 @@ WHITE_MIN_CONTOUR = 1
 WHITE = (200,200,200)
 BLACK = (0,0,0)
 LOWER_BLACK = np.array([0,0,0])
-UPPER_BLACK = np.array([50,50,50])
+UPPER_BLACK = np.array([30,30,30])
 BLACK_MIN_CONTOUR = .7
 
 """init_all_balls initalizes and stores BallInfo objects with their respective constants.

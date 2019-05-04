@@ -14,7 +14,7 @@ sys.path.append('/Users/ouchristinah/Google Drive/CMU/S19/capstone/integration/c
 from cv.cv_ball import CVBall
 from cv.modules.average_queue import AverageQueue
 from cv.modules.color_classification import ColorClassification
-from cv.hsv_filtering import get_resized_frame, norm_coordinates
+from cv.hsv_filtering import get_resized_frame, norm_coordinates, wait_escape
 import cv.constants as constants
 
 
@@ -61,36 +61,43 @@ def run_hough_circles(image, output, aggres, cc, display=False):
 
         result2[color_str] = (x, y)
 
-        if not (color_str) in aggres:
-            aggres[color_str] = AverageQueue(limit=10)
+        if len(aggres) == 0:
+            for k in constants.RGB_TARGETS.keys():
+                aggres[k] = AverageQueue(limit=10)
 
-        aggres[color_str].add(x, y)
+        if color_str in aggres:
+            aggres[color_str].add(x, y)
 
-        # else:
-        # print("Can't find a bucket for this", x, y, color_str)
-        rgb = cc.get_rgb_value(color_str)
-        bgr = rgb[2],rgb[1],rgb[0]
-        # cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2),bgr, -1)
-        # cv2.rectangle(output, (x - 3, y - 3), (x + 3, y + 3),(0,0,0), 1)
+            # else:
+            # print("Can't find a bucket for this", x, y, color_str)
+            rgb = cc.get_rgb_value(color_str)
+            bgr = rgb[2],rgb[1],rgb[0]
+            # cv2.rectangle(output, (x - 2, y - 2), (x + 2, y + 2),bgr, -1)
+            # cv2.rectangle(output, (x - 3, y - 3), (x + 3, y + 3),(0,0,0), 1)
 
-        if True: # change me to stop using this average queue
-            ave_x, ave_y = aggres[color_str].get_average()
-            ave_x = int(ave_x)
-            ave_y = int(ave_y)
+            if True: # change me to stop using this average queue
+                ave_x, ave_y = aggres[color_str].get_average()
+                ave_x = int(ave_x)
+                ave_y = int(ave_y)
 
-            # draw the circle in the output image, then draw a rectangle
-            # corresponding to the center of the circle
-            # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
-            # cv2.rectangle(output, (ave_x - 2, ave_y - 2), (ave_x + 2, ave_y + 2), (20,255,57), -1)
-            # cv2.rectangle(output, (x - 1, y - 1), (x + 1, y + 1), color_val, -1)
+                # draw the circle in the output image, then draw a rectangle
+                # corresponding to the center of the circle
+                # cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+                cv2.rectangle(output, (ave_x - 2, ave_y - 2), (ave_x + 2, ave_y + 2), (20,255,57), -1)
+                cv2.rectangle(output, (x - 1, y - 1), (x + 1, y + 1), bgr, -1)
 
-    # for ((x, y), (w, z)) in constants.ignore_regions:
-    #     cv2.rectangle(output, (x, y), (w, z), (255, 255, 255), 1)
+
+
+    for ((x, y), (w, z)) in constants.ignore_regions:
+        cv2.rectangle(output, (x, y), (w, z), (255, 255, 255), 1)
 
 
     result = {}
     for k, v in aggres.items():
-        result[k] = v.get_average()
+        try:
+            result[k] = v.get_average()
+        except:
+            pass
 
     # show the output image, if prompted to by display flag
     # if display:
@@ -128,8 +135,8 @@ def main(display):
         frame = get_resized_frame(frame)
         frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
         frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
-        frame_y1, frame_y2 = 25, 400
-        frame_x1, frame_x2 = 11, 800
+        frame_y1, frame_y2 = 53, 426
+        frame_x1, frame_x2 = 13, 800
         frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         frame_height = frame.shape[0]
         frame_width = frame.shape[1]
@@ -142,12 +149,13 @@ def main(display):
             norm_balls.append(CVBall(x, y, k))
         print("*******************************************")
         print(norm_balls)
-        # cv2.imshow("output", output)
-        # res = cv2.waitKey(0)
-        # print(res)
-        # if res != 27:
-        #     aggres = {}
-        # print()
+        cv2.imshow("output", output)
+        wait_escape()
+
+    # When everything done, release the capture
+    if USING_CAMERA:
+        cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    main(display=False)
+    main(display=True)

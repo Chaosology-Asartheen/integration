@@ -66,7 +66,7 @@ def find_ball(ball, hsv, frame, cv_balls):
     center = None
 
     min_contour_area = table_pixel_width * ball.min_contour
-    max_contour_area = table_pixel_width * 2.7
+    max_contour_area = 1000
     # if (ball.str_rep == "white"):
     #     max_contour_area = table_pixel_width * 3
     # if (ball.str_rep == "blue"):
@@ -85,11 +85,14 @@ def find_ball(ball, hsv, frame, cv_balls):
         # Check that table coordinates are within right bounds (ball is indeed on the table)
         if (constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-constants.BALL_RADIUS and
             constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-constants.BALL_RADIUS):
-            # print("cA={}, min={} max={}".format(cv2.contourArea(c), min_contour_area, max_contour_area))
+
+            if (100 < cv2.contourArea(c) < 1000):
+                print("cA={}, min={} max={}, radius={}".format(cv2.contourArea(c), min_contour_area, max_contour_area, radius))
+
             # Ensure that contour area is correct for a ball
             if (min_contour_area < cv2.contourArea(c) < max_contour_area):
 
-                if (ball.str_rep != "white" or (2*constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-2*constants.BALL_RADIUS and
+                if (ball.str_rep != "white" and radius < constants.MAX_RADIUS or (2*constants.BALL_RADIUS < table_x < constants.TABLE_LENGTH-2*constants.BALL_RADIUS and
                     2*constants.BALL_RADIUS < table_y < constants.TABLE_WIDTH-2*constants.BALL_RADIUS)):
 
                     # if not (ball.str_rep in aggres):
@@ -169,7 +172,7 @@ def get_resized_frame(frame):
     return frame
 
 def run_hsv_filtering(frame):
-    ball_list = ["white","orange","purple","black"]
+    ball_list = ["orange"]
     # "white","orange","purple","black"
     #
     balls = init_ball_info(ball_list)
@@ -190,18 +193,8 @@ def main():
 
     count = 0
     times = []
-    curr = time.time()
     running = True
     while running:
-        if count < 100:
-            new_time = time.time()
-            times.append((new_time - curr) * 1000)
-            curr = new_time
-            count += 1
-            print(count)
-        else:
-            import statistics
-            print('LAST 100 AVG: ', statistics.mean(times))
         frame = None
 
         # Take each frame
@@ -218,12 +211,12 @@ def main():
         frame = get_resized_frame(frame)
         frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
         frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
-        frame_y1, frame_y2 = 25, 400
-        frame_x1, frame_x2 = 11, 800
+        frame_y1, frame_y2 = 53, 426
+        frame_x1, frame_x2 = 13, 800
         frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
 
         if DISPLAY_INTERMEDIATE:
-            # ret, frame = cap.read()
+            print('disp')
             cv2.imshow('frame', frame)
             wait_escape()
 
@@ -246,9 +239,9 @@ def main():
 
         # Pass parameters to pool
 
-        # if DISPLAY:
-        #     cv2.imshow('frame', frame)
-        #     wait_escape()
+        if DISPLAY:
+          cv2.imshow('frame', frame)
+          wait_escape()
 
     # When everything done, release the capture
     if USING_CAMERA:
@@ -256,5 +249,5 @@ def main():
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    DISPLAY = False
+    DISPLAY = True
     main()

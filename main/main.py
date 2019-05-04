@@ -85,28 +85,15 @@ def main():
     cc.fill_color_ranges(d=constants.RGB_TARGETS)
     cc.fill_rgb_lookup(d=constants.DISPLAY_COLORS)
 
-    count = 0
-    times = []
-    curr = time.time()
     while True:
-        if count < 100:
-            new_time = time.time()
-            times.append((new_time - curr) * 1000)
-            curr = new_time
-            count += 1
-            print(count)
-        else:
-            import statistics
-            print('LAST 100 AVG: ', statistics.mean(times))
-        # time.sleep(.5)
 
         # resize frame according to constants
         ret, frame = cap.read()
         frame = get_resized_frame(frame)
         frame = cv2.flip(frame, 0) # Flips horizontally (hot dog)
         frame = cv2.flip(frame, 1) # Flips vertically (hamburger)
-        frame_y1, frame_y2 = 25, 380
-        frame_x1, frame_x2 = 17, 800
+        frame_y1, frame_y2 = 53, 426
+        frame_x1, frame_x2 = 13, 800
         frame = frame[int(frame_y1):int(frame_y2),int(frame_x1):int(frame_x2)]
         max_x = frame.shape[1]
         max_y = frame.shape[0]
@@ -114,8 +101,8 @@ def main():
         output = frame.copy()
 
         # CV
-        # cv_balls = run_hough_circles(frame, output, aggres, cc, display=True)
-        cv_balls = run_hsv_filtering(frame)
+        cv_balls = run_hough_circles(frame, output, aggres, cc, display=True)
+        # cv_balls = run_hsv_filtering(frame)
 
         cuestick_res = find_cuestick(frame, output)
         norm_mid_point = None
@@ -126,17 +113,17 @@ def main():
             cue_tip_x, cue_tip_y = cuestick_tip_res
 
         # HOUGH CIRCLES WAY
-        # new_balls = []
-        # for k in sorted(cv_balls.keys()):
-        #     v = cv_balls[k]
-        #     x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
-        #     new_balls.append(CVBall(x, y, k))
+        new_balls = []
+        for k in sorted(cv_balls.keys()):
+            v = cv_balls[k]
+            x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
+            new_balls.append(CVBall(x, y, k))
 
         # hSV filtering
-        new_balls = cv_balls
-        print(new_balls)
+        # new_balls = cv_balls
 
-        # Pass parameters to pool, and speed module
+        # print(new_balls)
+        # Pass parameters to pool
         table.set_cv_balls(new_balls)
         speed_module.set_cv_balls(new_balls)
 
@@ -148,7 +135,7 @@ def main():
 
         # cv2.waitKey(0)
         # Here, update GUI
-        gui_update(screen, table)
+        gui_update(screen, table, speed_module)
 
     # When everything done, release the capture
     cap.release()

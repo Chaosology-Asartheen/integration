@@ -8,7 +8,8 @@ from pool.src.physics.coordinates import Coordinates
 from pool.src.physics.utility import get_distance
 
 MOVING_THRESHOLD = 0.01 # Position diff must be greater than this to be considered 'moving'
-ITERATION_MS = 220 # Time for each CV iteration (delta-T)
+ITERATION_TIME = .220 # Time for each CV iteration in seconds (delta-T)
+SPEED_SCALE = 2.0 # Hard-coded scale value to scale sped
 
 """
 Module to do 2 things:
@@ -20,25 +21,27 @@ Data flow looks like:
 CV -----------------------------> PoolTable
        |                     ^
        |--> SpeedDetection --|
-       
+
 Where CV gives PoolTable: static ball positions and cue stick position, as usual
-And now, CV gives SpeedDetection the same positions, SpeedDetection computes speed, and gives to PoolTAble 
+And now, CV gives SpeedDetection the same positions, SpeedDetection computes speed, and gives to PoolTAble
 """
 class SpeedDetection:
     def __init__(self, gui_mode=False):
-        self.cue_stick_tip_locations = deque(maxlen=10) # List of Coordinates; only need prev loc to get distances
-        self.cue_stick_tip_distances = deque(maxlen=10) # List of floats (distances); to get speed
-        self.cue_stick_speeds = deque(maxlen=10)        # Last elem is current speed
+        self.cue_stick_tip_locations = deque(maxlen=5) # List of Coordinates; only need prev loc to get distances
+        self.cue_stick_tip_locations.append(Coordinates(0.5, 0.5))
+        self.cue_stick_tip_distances = deque(maxlen=5) # List of floats (distances); to get speed
+        self.cue_stick_speeds = deque(maxlen=5)        # Last elem is current speed
 
-        self.cue_ball_locations = deque(maxlen=10) # List of Coordinates
+        self.cue_ball_locations = deque(maxlen=5) # List of Coordinates
         self.cue_ball_is_moving = False
 
         self.gui_mode = gui_mode # DEBUG
 
     # Public 'setters' (not really) to be called by CV
     def set_cv_cue_stick(self, cv_cue_stick: CVCueStick):
-        assert cv_cue_stick is not None, 'CVCueStick given is None'
-        assert cv_cue_stick.tip is not None, 'CVCueStick.tip is None'
+        if cv_cue_stick is None or cv_cue_stick.tip is None:
+            self.cue_stick_speeds.clear() # Reset speed state
+            return
 
         curr_loc = Coordinates(cv_cue_stick.tip[0], cv_cue_stick.tip[1])
 
@@ -55,22 +58,17 @@ class SpeedDetection:
             self.cue_stick_tip_distances.append(dist)
 
             # Update cue stick speed (FIXME: Probably need to tune this 'formula')
-            curr_speed = dist / ITERATION_MS
-
-            """ TODO: Alternatively, could try taking an average
+            curr_speed = dist / ITERATION_TIME
+            print('SpeedDetection.set_cv_balls says curr_speed:', curr_speed)
             self.cue_stick_speeds.append(curr_speed)
-            self.cue_stick_speed = mean(self.cue_stick_speeds)
-            """
 
 
     def set_cv_balls(self, cv_balls: List[CVBall]):
-        assert cv_balls is not None, 'CVBall List given is None'
-        assert cv_balls is not [], 'CVBall List given is []'
+        if cv_balls is None or cv_balls is []:
+            return
 
-        found_cue_ball = False
         for cv_ball in cv_balls:
             if cv_ball.color is 'white':
-                found_cue_ball = True
                 curr_loc = Coordinates(cv_ball.x, cv_ball.y)
 
                 # Don't consider locations that are 'thrashing'
@@ -88,15 +86,13 @@ class SpeedDetection:
                 # Update whether cue ball is moving
                 self.cue_ball_is_moving = True
 
-        assert found_cue_ball, 'CVBall List did not have cue ball'
-
-
     # Public 'getter' to be called by PoolTable
     def get_cue_stick_speed(self):
         if self.gui_mode: return 1.0 # DEBUG
 
         if len(self.cue_stick_speeds) > 0:
-            return self.cue_stick_speeds[-1]
+            # return self.cue_stick_speeds[-1]
+            return mean(self.cue_stick_speeds) * SPEED_SCALE
         else:
             return 0.0
 
@@ -105,5 +101,3 @@ class SpeedDetection:
         if self.gui_mode: return False # DEBUG
 
         return self.cue_ball_is_moving
-
-

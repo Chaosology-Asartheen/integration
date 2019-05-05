@@ -7,7 +7,7 @@ from cv.cv_ball import CVBall
 from pool.src.physics.coordinates import Coordinates
 from pool.src.physics.utility import get_distance
 
-MOVING_THRESHOLD = 0.01 # Position diff must be greater than this to be considered 'moving'
+MOVING_THRESHOLD = 0.05 # Position diff must be greater than this to be considered 'moving'
 ITERATION_TIME = .220 # Time for each CV iteration in seconds (delta-T)
 SPEED_SCALE = 2.0 # Hard-coded scale value to scale sped
 
@@ -40,6 +40,7 @@ class SpeedDetection:
     # Public 'setters' (not really) to be called by CV
     def set_cv_cue_stick(self, cv_cue_stick: CVCueStick):
         if cv_cue_stick is None or cv_cue_stick.tip is None:
+            print('SpeedDetection.set_cv_cue_stick - NO CV CUE STICK, RESETTING SPEED')
             self.cue_stick_speeds.clear() # Reset speed state
             return
 
@@ -59,7 +60,7 @@ class SpeedDetection:
 
             # Update cue stick speed (FIXME: Probably need to tune this 'formula')
             curr_speed = dist / ITERATION_TIME
-            print('SpeedDetection.set_cv_balls says curr_speed:', curr_speed)
+            print('SpeedDetection.set_cv_cue_stick CURR SPEED:', curr_speed)
             self.cue_stick_speeds.append(curr_speed)
 
 
@@ -92,7 +93,9 @@ class SpeedDetection:
 
         if len(self.cue_stick_speeds) > 0:
             # return self.cue_stick_speeds[-1]
-            return mean(self.cue_stick_speeds) * SPEED_SCALE
+            avg_speed = mean(self.cue_stick_speeds) * SPEED_SCALE
+            print('SpeedDetection.get_cue_stick_speed returning AVG SPEED:', avg_speed, ' speeds are: ', self.cue_stick_speeds)
+            return avg_speed
         else:
             return 0.0
 

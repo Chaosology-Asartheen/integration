@@ -266,10 +266,10 @@ if __name__ == "__main__":
         cuestick_tip_res = None
         cuestick_res = None
         white_ball = CVBall(300,125,"white")
-        cuestick_res = find_cuestick(frame, output, white_ball)
+        # cuestick_res = find_cuestick(frame, output, white_ball)
         if cuestick_res:
             norm_mid_point, norm_left_point, norm_right_point = cuestick_res
-        # cuestick_tip_res = find_cuestick_tip(frame, output)
+        cuestick_tip_res = find_cuestick_tip(frame, output)
         if cuestick_tip_res:
             cue_tip_x, cue_tip_y = cuestick_tip_res
 

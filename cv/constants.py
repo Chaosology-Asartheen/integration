@@ -15,6 +15,17 @@ MAX_RADIUS = 20
 
 RGB_EPSILON = 30
 
+# X/Y offsets due to imperfect camera placement and cropping
+# Pixels/cm ratio * cm
+X_PIXELS_PER_CM = 17.4568288854
+Y_PIXELS_PER_CM = 15.9426229508
+# X_CM_OFFSET = 1
+# Y_CM_OFFSET = .7
+X_CM_OFFSET = 0
+Y_CM_OFFSET = 0
+X_CROP_OFFSET = X_PIXELS_PER_CM * X_CM_OFFSET
+Y_CROP_OFFSET = Y_PIXELS_PER_CM * Y_CM_OFFSET
+
 # target values, will hit within EPSILON
 RGB_TARGETS = {"white": (245, 245, 245),
             #"green": (10, 160, 160),

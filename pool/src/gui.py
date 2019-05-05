@@ -20,7 +20,11 @@ TABLE_OFFSET_X, TABLE_OFFSET_Y = 0, 0
 
 # Use these for Macbook Pro 13" mirroring
 # HORIZONTAL: -8, VERTICAL: -20
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1573 + 95, 768 + 10  # Table fits entire screen
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1668, 778  # Table fits entire screen
+"""
+Table length: 95.55cm -> 17.4568288854 pixels/cm for x-axis
+Table width: 48.8cm -> 15.9426229508 pixels/cm for y-axis
+"""
 
 # Initialize pygame window to overlay on top of pool table
 SCREEN_X_OFFSET = 3000 # This one just needs to be above 2000 because of projector position
@@ -149,8 +153,9 @@ def draw_ball_lines(screen, table: PoolTable, white_lines=False):
         ghost_line_start, ghost_line_end = ghost_lines[0], ghost_lines[1]
         draw_line(screen, ghost_line_start, ghost_line_end, color)
 
-        # Draw ghost ball end
-        draw_circle(screen, ghost_line_end, ball.radius, color)
+        # Draw ghost ball end, only for non-cue ball
+        if ball.ball_type is not BallType.CUE:
+            draw_circle(screen, ghost_line_end, ball.radius, color)
 
 def draw_pool_ball(screen, ball: PoolBall):
     # Draw a circle

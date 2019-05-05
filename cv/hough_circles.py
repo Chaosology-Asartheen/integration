@@ -55,6 +55,9 @@ def run_hough_circles(image, output, aggres, cc, display=False):
 
     # loop over the (x, y) coordinates and radius of the circles
     for (x, y, r) in circles:
+        x = int(x + constants.X_CROP_OFFSET)
+        y = int(y + constants.Y_CROP_OFFSET)
+
         # TODO: filter out x/y's that lie outside table edges or on pockets. Requires getting table coords
         color_str = cc.determine_color(image, x, y)
         colors.append(color_str)

@@ -78,7 +78,6 @@ def main():
     se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_WIDTH), HEIGHT)
     table = PoolTable(nw, se, speed_module)
 
-    time.sleep(INIT_SLEEP)
     # Initialize CV info
     cap = cv2.VideoCapture(0)
 
@@ -107,7 +106,21 @@ def main():
         cv_balls = run_hough_circles(frame, output, aggres, cc, display=True)
         # cv_balls = run_hsv_filtering(frame)
 
-        cuestick_res = find_cuestick(frame, output)
+        # HOUGH CIRCLES WAY
+        new_balls = []
+        white_ball = None
+        for k in sorted(cv_balls.keys()):
+            v = cv_balls[k]
+            if k == "white":
+                white_ball = CVBall(v[0],v[1],k)
+            x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
+            new_balls.append(CVBall(x, y, k))
+
+        # hSV filtering
+        # new_balls = cv_balls
+
+
+        cuestick_res = find_cuestick(frame, output, white_ball)
         norm_mid_point = None
         if cuestick_res:
             norm_mid_point, norm_left_point, norm_right_point = cuestick_res
@@ -115,15 +128,7 @@ def main():
         if cuestick_tip_res:
             cue_tip_x, cue_tip_y = cuestick_tip_res
 
-        # HOUGH CIRCLES WAY
-        new_balls = []
-        for k in sorted(cv_balls.keys()):
-            v = cv_balls[k]
-            x,y = norm_coordinates(v[0],v[1],0,max_x,0,max_y)
-            new_balls.append(CVBall(x, y, k))
 
-        # hSV filtering
-        # new_balls = cv_balls
 
         # print(new_balls)
         # Pass parameters to pool

@@ -98,7 +98,7 @@ class PoolTable:
         self.hole_radius = 2.25 * self.cue_ball.radius
 
 
-    def convert_cv_coords(self, cv_x, cv_y) -> Coordinates:
+    def convert_cv_coords(self, cv_x, cv_y, for_cue_stick=False) -> Coordinates:
         """
         Convert coordinates (cv_ball coordinates go from [0, 1.0])
 
@@ -109,17 +109,31 @@ class PoolTable:
         # print("convert_cv_coords input: ({}, {})".format(cv_x, cv_y))
 
         # Hard-coded offsets to align projector output
-        if cv_x < 0.6:
-            X_OFFSET = -5
-            X_SCALE = 1.025
-        else:
-            X_OFFSET = 10
-            X_SCALE = 1.0
-        Y_OFFSET = -13
-        Y_SCALE = 1.0
+        if False: # Tweak for cue stick
+            pass
+        else: # Tweak for pool balls
+            if cv_x < 0.6:
+                X_OFFSET = 12
+                X_SCALE = .995
+            else:
+                X_OFFSET = 10
+                X_SCALE = .99
+            # Y_OFFSET = -13
+            # Y_SCALE = 1.0
 
+            # X_OFFSET = +12
+            # X_SCALE = .995
+            Y_OFFSET = 0
+            Y_SCALE = 1.0
+
+        # Apply the offsets
         new_x = self.left + X_OFFSET + self.length * cv_x * X_SCALE
         new_y = self.bottom - Y_OFFSET + self.width * (1.0 - cv_y) * Y_SCALE
+
+        # DEBUG: Don't do offsets
+        # new_x = self.left + self.length * cv_x
+        # new_y = self.bottom + self.width * (1.0 - cv_y)
+
         return Coordinates(new_x, new_y)
 
     def convert_cv_color(self, color):
@@ -195,8 +209,8 @@ class PoolTable:
             return
 
         # Check if cue stick line intersects the cue ball
-        self.cue_stick_tip = self.convert_cv_coords(cv_cue_stick.tip[0], cv_cue_stick.tip[1])
-        self.cue_stick_back = self.convert_cv_coords(cv_cue_stick.back[0], cv_cue_stick.back[1])
+        self.cue_stick_tip = self.convert_cv_coords(cv_cue_stick.tip[0], cv_cue_stick.tip[1], for_cue_stick=True)
+        self.cue_stick_back = self.convert_cv_coords(cv_cue_stick.back[0], cv_cue_stick.back[1], for_cue_stick=True)
 
 
         # ¯\_(ツ)_/¯

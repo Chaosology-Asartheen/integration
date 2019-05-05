@@ -151,5 +151,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # gui_main()
+    # main()
+    gui_main()

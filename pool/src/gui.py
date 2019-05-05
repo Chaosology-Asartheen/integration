@@ -7,7 +7,7 @@ import pygame.gfxdraw
 
 from speed_detection.speed_detection import SpeedDetection
 from pool.src.physics.coordinates import Coordinates
-from pool.src.physics.utility import get_angle
+from pool.src.physics.utility import get_angle, get_distance
 from pool.src.physics.vector import Vector
 from pool.src.pool.ball_type import BallType
 from pool.src.pool.pool_ball import PoolBall
@@ -30,12 +30,17 @@ Table width: 48.8cm -> 15.9426229508 pixels/cm for y-axis
 SCREEN_X_OFFSET = 3000 # This one just needs to be above 2000 because of projector position
 SCREEN_Y_OFFSET = 175
 
+# For drawing cone lines
+CONE_ANGLE_DEG = 2.5 # degrees
+
+# Color constants
 BACKGROUND_COLOR = (0, 0, 0)
 FOREST_GREEN = (1, 68, 33)
 BLACK = (0,0,0)
 TABLE_COLOR = BLACK
 CUE_STICK_LINE_COLOR = (255, 255, 255)
 POCKET_COLOR = (255, 0, 0)
+
 """
 Helper functions.
 """
@@ -61,6 +66,35 @@ def draw_line(screen, p1, p2, color):
     x1, y1 = int(p1.x), int(p1.y)
     x2, y2 = int(p2.x), int(p2.y)
     pygame.gfxdraw.line(screen, x1, y1, x2, y2, color)
+
+def draw_line_cone(screen, p1, p2, color):
+    # aatrigon(surface, x1, y1, x2, y2, x3, y3, color) -> None
+
+    if p1 == p2: return
+
+    # Get +/- endpoints with angle
+    dist = get_distance(p2, p1)
+    angle = get_angle(p2, p1)
+
+    assert angle is not None, 'angle is None, p1={} p2={}'.format(p1, p2)
+
+    angle_top = (angle + CONE_ANGLE_DEG) % 360
+    angle_bot = (angle - CONE_ANGLE_DEG) % 360
+
+    p2_top = Coordinates(p1.x + dist * np.cos(np.radians(angle_top)),
+                         p1.y + dist * np.sin(np.radians(angle_top)))
+    p2_bot = Coordinates(p1.x + dist * np.cos(np.radians(angle_bot)),
+                         p1.y + dist * np.sin(np.radians(angle_bot)))
+
+    p1, p2_top, p2_bot = coords_to_pygame(p1, HEIGHT), coords_to_pygame(p2_top, HEIGHT), coords_to_pygame(p2_bot, HEIGHT)
+    x1, y1 = int(p1.x), int(p1.y)
+    x2, y2 = int(p2_top.x), int(p2_top.y)
+    x3, y3 = int(p2_bot.x), int(p2_bot.y)
+
+    pygame.gfxdraw.aatrigon(screen, x1, y1, x2, y2, x3, y3, color)
+
+
+
 
 def draw_circle(screen, center, radius, color, filled=False):
     p = coords_to_pygame(center, HEIGHT)
@@ -130,7 +164,32 @@ def draw_cue_stick(screen, table: PoolTable):
         assert table.floating_cue_stick_line_end is not None, 'table says floating cue stick, but cue stick line end is None'
         draw_line(screen, table.cue_stick_tip, table.floating_cue_stick_line_end, (255, 255, 255))
 
+def draw_ball_lines_cones(screen, table: PoolTable, white_lines=False):
+    # arc(Surface, color, Rect, start_angle, stop_angle, width=1) -> Rect
 
+    if table.ghost_ball_lines is {}:
+        return
+
+    for ball, ghost_lines in table.ghost_ball_lines.items():
+        if white_lines:
+            color = (255, 255, 255)
+        else:
+            color = ball.ball_type.color
+
+        # Draw traveling line
+        travel_line_start, travel_line_end = ball.pos, ghost_lines[0]
+        draw_line_cone(screen, travel_line_start, travel_line_end, color)
+
+        # Draw ghost ball start
+        draw_circle(screen, travel_line_end, ball.radius, color)
+
+        # Draw ghost line
+        ghost_line_start, ghost_line_end = ghost_lines[0], ghost_lines[1]
+        draw_line_cone(screen, ghost_line_start, ghost_line_end, color)
+
+        # Draw ghost ball end, only for non-cue ball
+        # if ball.ball_type is not BallType.CUE:
+        #     draw_circle(screen, ghost_line_end, ball.radius, color)
 
 def draw_ball_lines(screen, table: PoolTable, white_lines=False):
     if table.ghost_ball_lines is {}:
@@ -214,7 +273,8 @@ def gui_update(screen, table, speed: SpeedDetection):
 
     # Draw pool table
     draw_pool_table(screen, table)
-    draw_ball_lines(screen, table, white_lines=True)
+    # draw_ball_lines(screen, table, white_lines=True)
+    draw_ball_lines_cones(screen, table, white_lines=True)
 
     # Draw all pool balls
     for ball in balls:

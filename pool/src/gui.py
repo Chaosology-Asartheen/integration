@@ -26,9 +26,12 @@ Table length: 95.55cm -> 17.4568288854 pixels/cm for x-axis
 Table width: 48.8cm -> 15.9426229508 pixels/cm for y-axis
 """
 
+# GUI debugging dimensions
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = TABLE_LENGTH, TABLE_WIDTH = 1000, 600  # Table fits entire screen
+
 # Initialize pygame window to overlay on top of pool table
-SCREEN_X_OFFSET = 3000 # This one just needs to be above 2000 because of projector position
-SCREEN_Y_OFFSET = 175
+SCREEN_X_OFFSET = 0 #3000 # This one just needs to be above 2000 because of projector position
+SCREEN_Y_OFFSET = 0 #175
 
 BACKGROUND_COLOR = (0, 0, 0)
 FOREST_GREEN = (1, 68, 33)

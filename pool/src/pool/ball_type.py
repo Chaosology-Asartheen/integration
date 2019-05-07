@@ -4,7 +4,7 @@ from pool.src.pool import colors
 
 
 class BallType(Enum):
-    CUE = ('0', colors.DARK_WHITE)
+    CUE = ('0', colors.WHITE)
     ONE = ('1', colors.YELLOW)
     TWO = ('2', colors.DARK_BLUE)
     THREE = ('3', colors.RED)

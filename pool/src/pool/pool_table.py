@@ -69,8 +69,8 @@ class PoolTable:
 
         # Pool table balls
         if cv_ball_locations is None:
-            self.balls = PoolTable.get_balls(GameType.NINE_BALL)
-            self.rack_balls(GameType.NINE_BALL)
+            self.balls = PoolTable.get_balls(GameType.ONE_BALL)
+            self.rack_balls(GameType.ONE_BALL)
             assert (BallType.CUE in self.balls)
             self.cue_ball = self.balls[BallType.CUE]
         else:
@@ -434,6 +434,7 @@ class PoolTable:
         :return: 0 - Ghost ball start
                  1 - Ghost ball end
                  2 - Collided pool ball if there was one, None otherwise
+
                  3 - Collided pool ball velocity if there was one, None otherwise
         """
 
@@ -493,8 +494,8 @@ class PoolTable:
                 if struck_object_angle is None:
                     struck_object_angle = 0.0
 
-                if self.cue_angle % 360 == 0:  # Edge case when perfectly to the right
-                    struck_deflect_angle = (struck_deflect_angle + 90) % 360
+                if abs(object_ball_angle - self.cue_angle) % 360 < 1.0: # Straight on collision
+                    pass
                 elif self.cue_angle < struck_object_angle:  # Struck ball to the RIGHT of object ball
                     struck_deflect_angle = (struck_deflect_angle - 90) % 360
                 else:  # Struck ball to the LEFT of object ball
@@ -513,11 +514,11 @@ class PoolTable:
                         ghost_start.x + d * np.cos(np.radians(struck_deflect_angle)),
                         ghost_start.y + d * np.sin(np.radians(struck_deflect_angle))
                     )
-                    collided_vel = Vector(v_start.x/2, v_start.y/2) # FIXME: What to return here?
+                    collided_vel = Vector(v_start.x / 1.5, v_start.y / 1.5) # FIXME: What to return here?
                 else:
                     ghost_end = ghost_cushion
-                    collided_vel = Vector(vf_mag * np.cos(np.radians(object_ball_angle)),
-                                          vf_mag * np.sin(np.radians(object_ball_angle)))
+                    collided_vel = Vector(vf_mag * np.cos(np.radians(object_ball_angle)) / 1.5,
+                                          vf_mag * np.sin(np.radians(object_ball_angle)) / 1.5)
 
                 assert ghost_start is not None
                 assert ghost_end is not None
@@ -563,7 +564,6 @@ class PoolTable:
                 ghost_start.y + d * np.sin(np.radians(deflection_angle))
             )
             return ghost_start, ghost_end, None, None
-
 
         return ghost_start, ghost_end, None, None
 
@@ -615,13 +615,13 @@ class PoolTable:
 
     def time_step(self):
         # PURELY DEBUGGING #
-        print('PoolTable PAUSED - from SpeedDetection says cue stick speed is',
-                self.speed_module.get_cue_stick_speed())
+        # print('PoolTable PAUSED - from SpeedDetection says cue stick speed is',
+        #         self.speed_module.get_cue_stick_speed())
         # PURELY DEBUGGING #
 
         # Pause everything if cue ball is moving
         if self.speed_module.get_cue_ball_is_moving():
-            print('PoolTable PAUSED - from SpeedDetection says cue ball is moving')
+            # print('PoolTable PAUSED - from SpeedDetection says cue ball is moving')
             return
 
 
